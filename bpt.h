@@ -31,6 +31,8 @@ struct bpt_node
     // For leaf node
     void *previous ;
     void *next ;
+
+    void *father ;
 } ;
 
 extern int node_count ;
