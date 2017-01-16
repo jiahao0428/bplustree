@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include "bpt.h"
+#include <iostream>
 
 using namespace std ;
 
@@ -9,13 +10,30 @@ int node_count ;
 int splite_count ;
 
 
+bpt_node *new_bpt_node();
+void initial_bpt();
+bpt_node *find_leaf( int key ) ;
+bpt_node *tree_search(bpt_node *nodepointer, int key);
+void insert(bpt_node *nodepointer, entry *entry);
+void insert_in_node( bpt_node *node , entry *entry);
+void split( bpt_node *node , entry *entry);
+void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry) ;
+void delete_in_node( bpt_node *node , int key , entry *oldchildentry);
+void redistribute(bpt_node *L, bpt_node *S) ;
+void merge(bpt_node *L, bpt_node *S) ;
+void replace_parent_entry(bpt_node *nodepointer, int key, int key_to_replace, bpt_node *pointer_to_replace);
+entry* find_parent_entry(bpt_node *nodepointer, int key, int key_to_replace, bpt_node *pointer_to_replace);
+void traverse(bpt_node *nodepointer);
+
+
+
 bpt_node *new_bpt_node()
 {
 	node_count ++ ;
 
 	bpt_node *p = new bpt_node ;
 
-	p- > is_leaf = false;
+	p -> is_leaf = false;
     p -> is_root = false;
     p -> key_num = 0;
     p -> pointer[0] = NULL;
@@ -50,10 +68,10 @@ bpt_node *tree_search(bpt_node *nodepointer, int key)
 		if ( key < nodepointer -> key[0]) {
 			return tree_search((bpt_node *)nodepointer -> pointer[0], key);
 		} else {
-			if ( key >= nodepointer -> key[key_num - 1]) {
-				return tree_search((bpt_node *)nodepointer -> pointer[key_num], key);
+			if ( key >= nodepointer -> key[nodepointer -> key_num - 1]) {
+				return tree_search((bpt_node *)nodepointer -> pointer[nodepointer -> key_num], key);
 			} else {
-				for(int i=0; i<key_num; i++) {
+				for(int i=0; i<nodepointer -> key_num; i++) {
 					if (nodepointer -> key[i] <= key && key < nodepointer -> key[i+1]) {
 						return tree_search((bpt_node *)nodepointer->pointer[i], key);
 					}
@@ -67,7 +85,7 @@ bpt_node *tree_search(bpt_node *nodepointer, int key)
 void insert(bpt_node *nodepointer, entry *entry)
 {
 	if (!nodepointer -> is_leaf) {
-		for(int i=0; i<M; i++) {
+		for(int i=0; i<nodepointer->key_num; i++) {
 			if (nodepointer -> key[i] <= entry -> key && entry -> key < nodepointer -> key[i+1]) {
 
 				insert((bpt_node *)nodepointer -> pointer[i], entry);
@@ -115,31 +133,33 @@ void insert_in_node( bpt_node *node , entry *entry)
     node -> key_num ++ ;
 
     if ( node -> key_num == M ) // need to split
-        split( node ) ;
+        split( node, entry ) ;
+    else
+    	entry = NULL;
 
     return;
 }
 
 
-void split( bpt_node *node )
+void split( bpt_node *node, entry *entry)
 {
     splite_count ++ ;
     bpt_node *nodd = new_bpt_node() ;
     int mid_key = node -> key[ M / 2 ] ;
 
-    nodd -> key_num = M - M / 2 + 1 ; // is that right? -1 or?
+    nodd -> key_num = M - M / 2 ; // is that right? -1 or?
     for ( int i = 0 ; i < nodd -> key_num ; i ++ )
     {
         nodd -> key[ i ] = node -> key[ i + ( M / 2 ) ] ;
         nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) ] ;
     }
-    // Q: if node is leaf? it always put >km pointer on most right side?
+
     nodd -> pointer[ nodd -> key_num ] = node -> pointer[ M ] ; // pointer when key > km
     node -> key_num = M / 2 ;
 
     // what is the meaning? record?
     entry -> key = nodd -> key[0];
-    entry -> value = &(nodd) ;
+    entry -> value = nodd ;
 
     if(node->is_root) {
 
@@ -151,7 +171,7 @@ void split( bpt_node *node )
 		root -> pointer[ 1 ] = nodd ;
 		root -> key_num = 1 ;
 		node -> father = nodd -> father = root ;
-		// no need to return root?????
+
 	} else {
 		nodd -> father = node -> father ;
 
@@ -168,12 +188,12 @@ void split( bpt_node *node )
 }
 
 
-void delete(bpt_node *nodepointer, int key, entry *oldchildentry) 
+void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry) 
 {
 	if (!nodepointer -> is_leaf) {
 		for(int i=0; i<M; i++) {
-			if (nodepointer -> key[i] <= entry -> key && entry -> key < nodepointer -> key[i+1]) {
-				delete((bpt_node *)nodepointer -> pointer[i], key, oldchildentry);
+			if (nodepointer -> key[i] <= key && key < nodepointer -> key[i+1]) {
+				delete_entry((bpt_node *)nodepointer -> pointer[i], key, oldchildentry);
 				
 				if(oldchildentry == NULL) {
 					return;
@@ -186,29 +206,30 @@ void delete(bpt_node *nodepointer, int key, entry *oldchildentry)
 						return;
 					} else {
 						
-						bpt_node * s;
+						bpt_node * s = new bpt_node;
 
-						for(int j=0; j<nodepointer->father->key_num; j++) {
-							if(nodepointer->father->pointer[j] == &nodepointer) {
-								s = nodepointer->father->pointer[j+1];
+						for(int j=0; j<((bpt_node *)nodepointer->father) -> key_num; j++) {
+							if(((bpt_node *) nodepointer -> father) -> pointer[j] == nodepointer) {
+								s = (bpt_node *)((bpt_node *)nodepointer->father)->pointer[j+1];
 							}
 						}
 
 						if(s -> key_num > M/2) {
-							redistribute(nodepointer, s);
+							redistribute((bpt_node *) nodepointer, s);
 							oldchildentry = NULL;
 							return;
 						} else {
 							int key_to_replace = s -> key[0];
-							bpt_node* pointer_to_replace = s;
+							bpt_node* pointer_to_replace = new bpt_node;
+							pointer_to_replace = s;
 
-							merge(nodepointer, s);
+							merge((bpt_node *) nodepointer, s);
 							entry* M = find_parent_entry(root, s->key[0], key_to_replace, s);
 							oldchildentry -> key = M -> key;
 							oldchildentry -> value = M -> value;
 
 							insert_in_node(nodepointer, M);
-							
+
 							return;
 						}
 					}
@@ -227,21 +248,23 @@ void delete(bpt_node *nodepointer, int key, entry *oldchildentry)
 			return;
 		} else {
 			// next or previous??
-			bpt_node *s = (bpt_node*) nodepointer -> next;
+			bpt_node *s = new bpt_node; 
+			s = (bpt_node*) nodepointer -> next;
 			
 			int key_to_replace = s -> key[0];
 			//bpt_node* pointer_to_replace = s;
 
 			if(s -> key_num > M/2) { 
-				redistribute(nodepointer, s);
+				redistribute((bpt_node *) nodepointer, s);
 				// place most left key of s into parent
-				replace_parent_entry(nodepointer -> father, s -> key[0], key_to_replace, s);
+				replace_parent_entry((bpt_node *) nodepointer -> father, s -> key[0], key_to_replace, s);
 				oldchildentry = NULL;
 				return;
 			} else {
 
 				merge(nodepointer, s);
-				entry* M = find_parent_entry(nodepointer -> father, s->key[0], key_to_replace, s);
+				entry* M = new entry;
+				M = find_parent_entry((bpt_node *) nodepointer -> father, s->key[0], key_to_replace, s);
 				oldchildentry -> key = M -> key;
 				oldchildentry -> value = M -> value;
 
@@ -272,14 +295,15 @@ void redistribute(bpt_node *L, bpt_node *S)
 {
 	//l key num is d - 1
 	for(int i=0; i<M; i++) {
-		l -> key[i] = S ->key[S -> key_num -1];
-		l -> pointer[i] = S -> pointer[S -> key_num -1];
+		L -> key[i] = S ->key[S -> key_num -1];
+		L -> pointer[i] = S -> pointer[S -> key_num -1];
 
-		S ->key[S -> key_num -1] = NULL;
+		// problem
+		S ->key[S -> key_num -1] = 0;
 		S -> pointer[S -> key_num -1] = NULL;
 
 		++S -> key_num;
-		--l -> key_num;
+		--L -> key_num;
 
 		if(L -> key_num >= S -> key_num) {
 			break;
@@ -292,8 +316,8 @@ void redistribute(bpt_node *L, bpt_node *S)
 void merge(bpt_node *L, bpt_node *S) 
 {
 	for(int i=0; i<M; i++) {
-		L -> key[key_num] = S -> key[i];
-		L -> pointer[key_num] = L -> pointer[i];
+		L -> key[L -> key_num] = S -> key[i];
+		L -> pointer[L -> key_num] = L -> pointer[i];
 
 		++L -> key_num;
 		--S -> key_num;
@@ -326,9 +350,9 @@ entry* find_parent_entry(bpt_node *nodepointer, int key, int key_to_replace, bpt
 
 	for(int i=0; i<nodepointer->key_num; i++) {
 		if (nodepointer -> pointer[i] == pointer_to_replace) {
-			entry* M; 
-			M -> key = key[i];
-			M -> value = pointer[i];
+			entry* M = new entry; 
+			M -> key = nodepointer -> key[i];
+			M -> value = nodepointer -> pointer[i];
 
 			return M;
 		}
@@ -354,3 +378,36 @@ entry* find_parent_entry(bpt_node *nodepointer, int key, int key_to_replace, bpt
 		}
 	}
 }*/
+
+void traverse(bpt_node *nodepointer) {
+
+	for(int i=0; i<nodepointer -> key_num; i++) {
+		cout << nodepointer->key[i] << " ";
+	}
+	
+	cout << "\n";
+
+	if(!nodepointer -> is_leaf) {
+		for(int i=0; i<nodepointer -> key_num; i++) {
+			traverse((bpt_node *)nodepointer->pointer[i]);
+		}
+	}
+
+	return;
+}
+
+int main() {
+	int key[7] = {3,5,6,8,9,22,44};
+	initial_bpt();
+
+	for(int i=0; i<sizeof(key)/sizeof(key[0]); i++) {
+		entry *test= new entry;
+		test -> key = key[i];
+
+		insert(root, test);
+	}
+
+	traverse(root);
+
+	return 0;
+}

@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-// Integer, 512 bytes page
-const int M = 64 ;
-
+// Integer, 512 bytes page, +1 for overflow
+//const int M = 64 ;
+const int M = 5 ;
 struct rid 
 {
 	unsigned short int page_id ;
@@ -38,9 +38,9 @@ struct bpt_node
 extern int node_count ;
 extern int splite_count ;
 extern void initial_bpt() ;
-extern bool insert_in_bpt( int key , void *value ) ;
-extern bool delete_in_bpt( int key ) ;
-extern char *query_in_bpt( int key ) ;
+extern void insert(bpt_node *nodepointer, entry *entry);
+extern void traverse(bpt_node *nodepointer);
+extern void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry) ;
 
 
 #endif
