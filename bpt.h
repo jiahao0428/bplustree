@@ -7,7 +7,7 @@
 
 // Integer, 512 bytes page, +1 for overflow
 //const int M = 64 ;
-const int M = 5 ;
+const int M = 3 ;
 struct rid 
 {
 	unsigned short int page_id ;
@@ -38,7 +38,7 @@ struct bpt_node
 extern int node_count ;
 extern int splite_count ;
 extern void initial_bpt() ;
-extern void insert(bpt_node *nodepointer, entry *entry);
+extern void insert(bpt_node *nodepointer, entry **entry);
 extern void traverse(bpt_node *nodepointer);
 extern void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry) ;
 

@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <cstdio>
+#include <cstring>
 #include "bpt.h"
 #include <iostream>
 
@@ -9,6 +11,7 @@ bpt_node *root ;
 int node_count ;
 int splite_count ;
 
+static const struct bpt_node* EmptyStruct;
 
 bpt_node *new_bpt_node();
 void initial_bpt();
@@ -41,6 +44,15 @@ bpt_node *new_bpt_node()
     p -> next = NULL;
 
     return p ;
+}
+
+entry *new_entry() {
+	entry *child = new entry;
+
+	child -> key = 0;
+	child -> value = NULL;
+
+	return child;
 }
 
 
@@ -82,88 +94,155 @@ bpt_node *tree_search(bpt_node *nodepointer, int key)
 }
 
 
-void insert(bpt_node *nodepointer, entry *entry)
+void insert(bpt_node *nodepointer, entry *child)
 {
+	//cout<<"first: "<< child <<endl;
 	if (!nodepointer -> is_leaf) {
 		for(int i=0; i<nodepointer->key_num; i++) {
-			if (nodepointer -> key[i] <= entry -> key && entry -> key < nodepointer -> key[i+1]) {
-
-				insert((bpt_node *)nodepointer -> pointer[i], entry);
+			if ((nodepointer -> key[i] <= child -> key && child -> key < nodepointer -> key[i+1])) {
+				insert((bpt_node *)nodepointer -> pointer[i + 1], child);
 				
 				// usual case, didn't split child
-				if(entry == NULL) {
+				if(child->key == 0) {
 					return;
 				} else {
 					if (nodepointer -> key_num  < M) {
-						insert_in_node((bpt_node *) nodepointer, entry);
-						entry = NULL;
+						insert_in_node((bpt_node *) nodepointer, child);
+						memset(child, 0, sizeof(child));
 						return;
 					} else {
-						insert_in_node((bpt_node *) nodepointer, entry);
+						insert_in_node((bpt_node *) nodepointer, child);
+						return;
+					}
+				}
+			} else if(child -> key < nodepointer -> key[0]) {
+				insert((bpt_node *)nodepointer -> pointer[0], child);
+				
+				// usual case, didn't split child
+				if(child->key == 0) {
+					return;
+				} else {
+					if (nodepointer -> key_num  < M) {
+						insert_in_node((bpt_node *) nodepointer, child);
+						memset(child, 0, sizeof(child));
+						return;
+					} else {
+						insert_in_node((bpt_node *) nodepointer, child);
+						return;
+					}
+				}
+			} else if (child -> key > nodepointer -> key[nodepointer->key_num-1]) {
+				//cout<< "node: "<< child;
+
+				insert((bpt_node *)nodepointer -> pointer[nodepointer->key_num], child);
+				//cout<< "empty??"<< child;
+				//cout<<"key: " <<child->key;
+				// usual case, didn't split child
+				if(child->key == 0) {
+					return;
+				} else {
+					//cout<<"hey";
+					if (nodepointer -> key_num  < M - 1) {
+						insert_in_node((bpt_node *) nodepointer, child);
+						memset(child, 0, sizeof(child));
+						return;
+					} else {
+						insert_in_node((bpt_node *) nodepointer, child);
 						return;
 					}
 				}
 			}
 		}
 	} else {
-		if (nodepointer -> key_num < M) {
-			insert_in_node((bpt_node *) nodepointer, entry);
-			entry = NULL;
+		//cout<<"leaf";
+		if (nodepointer -> key_num < M-1) {
+			//cout<< "before:" <<child;
+			insert_in_node((bpt_node *) nodepointer, child);
+			memset(child, 0, sizeof(child));
+			//cout<< "after:" <<child;
 			return;
 		} else {
-			insert_in_node((bpt_node *) nodepointer, entry);
+			insert_in_node((bpt_node *) nodepointer, child);
 			return;
 		}
 	}
 }
 
 
-void insert_in_node( bpt_node *node , entry *entry) 
+void insert_in_node( bpt_node *node , entry *child) 
 {
 	int x = 0 ;
 
-    while ( x < node -> key_num && node -> key[ x ] < entry -> key ) x ++ ;
+    while ( x < node -> key_num && node -> key[ x ] < child -> key ) x ++ ;
     for ( int i = node -> key_num ; i > x ; i -- )
         node -> key[ i ] = node -> key[ i - 1 ] ;
     for ( int i = node -> key_num + 1 ; i > x + 1 ; i -- )
         node -> pointer[ i ] = node -> pointer[ i - 1 ] ;
 
-    node -> key[ x ] = entry -> key ;
-    node -> pointer[ x + 1 ] = entry -> value ;
-    node -> key_num ++ ;
+    node -> key[ x ] = child -> key ;
+    node -> pointer[ x + 1 ] = child -> value ;
+    node -> key_num += 1 ;
 
     if ( node -> key_num == M ) // need to split
-        split( node, entry ) ;
+        split( node, child ) ;
     else
-    	entry = NULL;
+    	memset(child, 0, sizeof(child));
 
     return;
 }
 
 
-void split( bpt_node *node, entry *entry)
+void split( bpt_node *node, entry *child)
 {
+	//traverse(root);
     splite_count ++ ;
     bpt_node *nodd = new_bpt_node() ;
-    int mid_key = node -> key[ M / 2 ] ;
 
-    nodd -> key_num = M - M / 2 ; // is that right? -1 or?
-    for ( int i = 0 ; i < nodd -> key_num ; i ++ )
-    {
-        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) ] ;
-        nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) ] ;
+    int mid_key = node -> key[ M / 2 ] ;
+	nodd -> key_num = M - M / 2 ; 
+
+	if(!node->is_leaf) {
+    	nodd -> key_num = M - M / 2 - 1; 
+
+    	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
+    	{
+	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) + 1] ;
+	        nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) + 1] ;
+
+	        //empty it
+	        node -> key[ i + ( M / 2 ) + 1] = 0;
+    	}
+	}
+    else {
+    	nodd -> key_num = M - M / 2;
+
+    	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
+    	{
+	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) ] ;
+	        nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) ] ;
+
+	        //empty it
+	        node -> key[ i + ( M / 2 ) ] = 0;
+	        if(node->is_leaf)
+	        	node -> pointer[ i + ( M / 2 ) ] = NULL;
+    	}
     }
 
     nodd -> pointer[ nodd -> key_num ] = node -> pointer[ M ] ; // pointer when key > km
+    node -> pointer[ M ] = NULL;
     node -> key_num = M / 2 ;
 
-    // what is the meaning? record?
-    entry -> key = nodd -> key[0];
-    entry -> value = nodd ;
+    if(node->is_leaf)
+	    child -> key = nodd -> key[0];
+	else
+		child -> key = mid_key;
+
+    child -> value = nodd ;
 
     if(node->is_root) {
 
 		node -> is_root = false ;
+		//node -> is_leaf = false;
 		root = new_bpt_node() ;
 		root -> is_root = true ;
 		root -> key[ 0 ] = mid_key ;
@@ -171,6 +250,13 @@ void split( bpt_node *node, entry *entry)
 		root -> pointer[ 1 ] = nodd ;
 		root -> key_num = 1 ;
 		node -> father = nodd -> father = root ;
+
+		// is leaf ??
+		root -> is_leaf = false;
+		
+		if(node -> is_leaf) {
+			nodd -> is_leaf = true;
+		}
 
 	} else {
 		nodd -> father = node -> father ;
@@ -184,6 +270,8 @@ void split( bpt_node *node, entry *entry)
     	}
 	}
 
+	//traverse(root);
+	//cout<<root->key_num;
     return;
 }
 
@@ -382,14 +470,17 @@ entry* find_parent_entry(bpt_node *nodepointer, int key, int key_to_replace, bpt
 void traverse(bpt_node *nodepointer) {
 
 	for(int i=0; i<nodepointer -> key_num; i++) {
-		cout << nodepointer->key[i] << " ";
+		printf("%d ", nodepointer->key[i]);
+		//fflush(stdout);
 	}
-	
-	cout << "\n";
+
+	printf("\n");
+	//fflush(stdout);
 
 	if(!nodepointer -> is_leaf) {
-		for(int i=0; i<nodepointer -> key_num; i++) {
-			traverse((bpt_node *)nodepointer->pointer[i]);
+		for(int i=0; i<=nodepointer -> key_num; i++) {
+			traverse((bpt_node *)nodepointer -> pointer[i]);
+			continue;
 		}
 	}
 
@@ -397,17 +488,19 @@ void traverse(bpt_node *nodepointer) {
 }
 
 int main() {
-	int key[7] = {3,5,6,8,9,22,44};
+	//int key[7] = {3,5,6,8,9,22,44};
+	int key[8] = {3,4,1,5,2,9,6,8};
 	initial_bpt();
 
 	for(int i=0; i<sizeof(key)/sizeof(key[0]); i++) {
 		entry *test= new entry;
 		test -> key = key[i];
-
+		//cout<<test;
 		insert(root, test);
 	}
 
 	traverse(root);
+	cout << "split count: "<< splite_count << endl;
 
 	return 0;
 }
