@@ -7,7 +7,7 @@
 
 // Integer, 512 bytes page, +1 for overflow
 //const int M = 64 ;
-const int M = 5 ;
+const int M = 3 ;
 struct rid 
 {
 	unsigned short int page_id ;
