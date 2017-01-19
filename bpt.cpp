@@ -44,11 +44,13 @@ bpt_node *new_bpt_node()
     p -> pointer[0] = NULL;
     p -> previous = NULL;
     p -> next = NULL;
+    p -> father = NULL;
 
     return p ;
 }
 
-entry *new_entry() {
+entry *new_entry() 
+{
 	entry *child = new entry;
 
 	child -> key = 0;
@@ -136,12 +138,12 @@ void insert(bpt_node *nodepointer, entry *child)
 			
 		}
 	} else {
-		//cout<<"leaf";
+
 		if (nodepointer -> key_num < M-1) {
-			//cout<< "before:" <<child;
+
 			insert_in_node((bpt_node *) nodepointer, child);
 			memset(child, 0, sizeof(child));
-			//cout<< "after:" <<child;
+
 			return;
 		} else {
 			insert_in_node((bpt_node *) nodepointer, child);
@@ -232,7 +234,6 @@ void split( bpt_node *node, entry *child)
     if(node->is_root) {
 
 		node -> is_root = false ;
-		//node -> is_leaf = false;
 		root = new_bpt_node() ;
 		root -> is_root = true ;
 		root -> key[ 0 ] = mid_key ;
@@ -241,7 +242,6 @@ void split( bpt_node *node, entry *child)
 		root -> key_num = 1 ;
 		node -> father = nodd -> father = root ;
 
-		// is leaf ??
 		root -> is_leaf = false;
 		
 		if(node -> is_leaf) {
@@ -297,7 +297,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 				} else {
 	
 					delete_in_node((bpt_node *) nodepointer, key, oldchildentry);
-					cout<<"he";
+					//cout<<"he";
 					//traverse(root);
 
 
@@ -306,32 +306,19 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 					} else {
 						
 						bpt_node * s = new bpt_node;
-						cout<<nodepointer->key_num;
+						//cout<<nodepointer->key_num;
 
-						if(!nodepointer->is_root) {
+						if(!nodepointer -> is_root) {
 
 							bool is_left = false;
 							bool need_to_merge = false;
-
-
-							//Weird
-							/*for(int j=0; j<((bpt_node *)nodepointer->father) -> key_num; j++) {
-								if(((bpt_node *) nodepointer -> father) -> pointer[((bpt_node *)nodepointer->father) -> key_num] == nodepointer) { //most right
-									s = (bpt_node *)((bpt_node *)nodepointer->father)->pointer[((bpt_node *)nodepointer->father) -> key_num - 1]; //left sibling
-									is_right = true;
-									break;
-								} else if(((bpt_node *) nodepointer -> father) -> pointer[j] == nodepointer) {
-									s = (bpt_node *)((bpt_node *)nodepointer->father)->pointer[j+1];
-									break;
-								}
-							}*/
 							
 							int count = ((bpt_node *)nodepointer->father) -> key_num;
-							bpt_node * parent = (bpt_node *)nodepointer->father;
+							bpt_node * parent = (bpt_node *)nodepointer -> father;
 
 							for(int j=0; j<count; j++) {
 								if(parent -> pointer[j] == nodepointer && j > 0) {
-									if(((bpt_node *) parent->pointer[j+1]) -> key_num > M/2) {
+									if(((bpt_node *) parent -> pointer[j+1]) -> key_num > M/2) {
 										s = (bpt_node *)parent -> pointer[j+1];
 									} else if(((bpt_node *)parent -> pointer[j-1]) -> key_num > M/2){
 										s = (bpt_node *)parent -> pointer[j-1];
@@ -374,32 +361,37 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 							entry *m = new entry;
 
 							if(!need_to_merge) {
-								cout<<"re";
+								//cout<<"re";
 								if(!is_left) {
+									printf("right\n");
 									redistribute((bpt_node *) nodepointer, s);
 								}
 								else {
+									printf("left\n");
+									printf("%d\n", nodepointer->key[0]);
 									redistribute(s, (bpt_node *) nodepointer);
+
+
 								}
 								memset(oldchildentry, 0, sizeof(oldchildentry));
 							} else {
-								cout<<"mer";
+								//cout<<"mer";
 
 								bpt_node* pointer_to_replace = new bpt_node;
 								pointer_to_replace = s;
 
 
 								if(!is_left) {
-									entry* m = find_parent_entry((bpt_node *)s->father, s);
+									entry* m = find_parent_entry((bpt_node *)s -> father, s);
 									oldchildentry -> key = m -> key;
 									oldchildentry -> value = m -> value;
 									insert_in_node(nodepointer, m);
 									merge((bpt_node *) nodepointer, s);
 								}
 								else {
-									cout<<"left";
+									//cout<<"left";
 									//traverse(root);
-									entry* m = find_parent_entry((bpt_node *)nodepointer->father, nodepointer);
+									entry* m = find_parent_entry((bpt_node *)nodepointer -> father, nodepointer);
 									oldchildentry -> key = m -> key;
 									oldchildentry -> value = m -> value;
 									insert_in_node(s, m);
@@ -409,15 +401,15 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 						} else {
 							// Not sure...
 							if(nodepointer->key_num <= 1) {
-								printf("here?\n");
-								cout<<nodepointer->key_num;
-								if(((bpt_node *)nodepointer->pointer[0])->key_num + ((bpt_node *)nodepointer->pointer[1])->key_num + nodepointer->key_num < M) {
+								//printf("here?\n");
+								//cout<<nodepointer->key_num;
+								if(((bpt_node *)nodepointer->pointer[0]) -> key_num + ((bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < M) {
 									//merge with root
-									printf("hey\n");
-									if(((bpt_node *)nodepointer->pointer[0])-> key_num > 0) {
-										root = (bpt_node *)nodepointer->pointer[0];
+									//printf("hey\n");
+									if(((bpt_node *)nodepointer -> pointer[0]) -> key_num > 0) {
+										root = (bpt_node *)nodepointer -> pointer[0];
 									} else {
-										root = (bpt_node *)nodepointer->pointer[1];
+										root = (bpt_node *)nodepointer -> pointer[1];
 									}
 
 									root -> is_root = true;
@@ -433,19 +425,19 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			}
 		}
 	} else {
-		cout<<"leaf";
-		cout<<((bpt_node *) nodepointer) -> key_num;
-		cout<<((bpt_node *) nodepointer)->key[0];
+		//cout<<"leaf";
+		//cout<<((bpt_node *) nodepointer) -> key_num;
+		//cout<<((bpt_node *) nodepointer) -> key[0];
 		delete_in_node((bpt_node *) nodepointer, key, oldchildentry);
 		//cout<<((bpt_node*) nodepointer -> previous)->key[0];
 
 		if (nodepointer -> key_num >= M/2) {
-			cout<<"nothing happen?";
+			//cout<<"nothing happen?";
 			memset(oldchildentry, 0, sizeof(oldchildentry));
 			return;
 		} else {
 
-			cout<<((bpt_node *) nodepointer)->key_num;
+			//cout<<((bpt_node *) nodepointer) -> key_num;
 			bpt_node *s = new bpt_node; 
 			entry* n = new entry;
 			//cout<< (bpt_node*) nodepointer -> next;
@@ -455,32 +447,25 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			bool need_to_merge = false;
 			bool is_left = false;
 
-			// Decide which sibling should be taken
-			/*if(n->key == key || nodepointer -> next == 0) {
-				s = (bpt_node*) nodepointer -> previous;
-			} else {
-				s = (bpt_node*) nodepointer -> next;
-			}*/
-
 			//cout<< "count:" <<((bpt_node*) nodepointer -> previous)->key_num;
 			//cout<< ((bpt_node*) nodepointer -> previous) -> key[1];
-			cout<< nodepointer->key[0];
-			cout<<"check";
+			//cout<< nodepointer->key[0];
+			//cout<<"check";
 			//print_leaf_descending(root);
 
-			if(((bpt_node*) nodepointer -> next)->key_num > M/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer->father) {
+			if(((bpt_node*) nodepointer -> next) -> key_num > M/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
 				s = (bpt_node*) nodepointer -> next;
-				cout<<"here";
-			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous)->key_num > M/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer->father) {
-				if(((bpt_node*) nodepointer -> previous)->key_num > M/2) {
+				//cout<<"here";
+			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous) -> key_num > M/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
+				if(((bpt_node*) nodepointer -> previous) -> key_num > M/2) {
 					s = (bpt_node*) nodepointer -> previous;
 					is_left = true;
-					cout<<"there";
+					//cout<<"there";
 				}
 			} else {
 				need_to_merge = true;
-				cout<<"need to merge";
-				if(nodepointer -> previous == 0 || ((bpt_node *)nodepointer->father)->pointer[0] == nodepointer || ((bpt_node*) nodepointer -> previous) -> father != nodepointer->father) {
+				//cout<<"need to merge";
+				if(nodepointer -> previous == 0 || ((bpt_node *)nodepointer->father) -> pointer[0] == nodepointer || ((bpt_node*) nodepointer -> previous) -> father != nodepointer -> father) {
 					s = (bpt_node*) nodepointer -> next;
 				} else {
 					s = (bpt_node*) nodepointer -> previous;
@@ -489,29 +474,29 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			}
 
 			if(!need_to_merge) { 
-				cout<<"redistribute";
+				//cout<<"redistribute";
 
 				if(!is_left) {
 					redistribute((bpt_node *) nodepointer, s);
-					cout<<s->key[0];
-					cout<<"here";
+					//cout<<s -> key[0];
+					//cout<<"here";
 					// father problem
-					cout<<((bpt_node *)s->father)->key[0];
+					//cout<<((bpt_node *)s->father)->key[0];
 					replace_parent_entry((bpt_node *) s -> father, s -> key[0], s);
 				} else {
 					redistribute(s,(bpt_node *) nodepointer);
-					cout<<nodepointer->key[0];
+					//cout<<nodepointer->key[0];
 					replace_parent_entry((bpt_node *) nodepointer -> father, nodepointer -> key[0], nodepointer);
 				}
 				// place most left key of s into parent
 				//print_leaf_ascending(root);
 				
-				cout<<"fuck";
-				cout<<((bpt_node *) s -> father) -> key[0];
+				//cout<<"fuck";
+				//cout<<((bpt_node *) s -> father) -> key[0];
 
 				memset(oldchildentry, 0, sizeof(oldchildentry));
 			} else {
-				cout<<"merge";
+				//cout<<"merge";
 
 				entry* m = new entry;
 
@@ -519,14 +504,14 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 					merge(nodepointer, s);
 					m = find_parent_entry((bpt_node *) nodepointer -> father, s);
 				} else {
-					cout<<"left";
+					//cout<<"left";
 					merge(s, nodepointer);
 					m = find_parent_entry((bpt_node *) nodepointer -> father, nodepointer);
 				}
 
-				cout<<"after merge:"<<s->key[s->key_num - 1];
+				//cout<<"after merge:"<<s->key[s -> key_num - 1];
 				oldchildentry -> key = m -> key;
-				cout<<"old:"<<oldchildentry->key;
+				//cout<<"old:"<<oldchildentry -> key;
 				oldchildentry -> value = m -> value;
 			}
 
@@ -580,8 +565,8 @@ void redistribute(bpt_node *L, bpt_node *S)
 		if(L->is_leaf) {
 			
 			// Moving from right
-			if(L->key_num < S->key_num) { 
-				L -> key[L->key_num] = S -> key[i];
+			if(L -> key_num < S -> key_num) { 
+				L -> key[L -> key_num] = S -> key[i];
 				L -> pointer[L->key_num] = S -> pointer[i];
 
 				entry *dummy = new entry;
@@ -593,9 +578,9 @@ void redistribute(bpt_node *L, bpt_node *S)
 				}
 			} else {
 				//Shift S key
-				for(int j=S->key_num;j>0;j--) {
- 					S->key[j] = S->key[j-1];
- 					S->pointer[j] = S->pointer[j]; 					
+				for(int j=S -> key_num;j>0;j--) {
+ 					S -> key[j] = S -> key[j-1];
+ 					S -> pointer[j] = S -> pointer[j]; 					
 				}
 
 				S -> key[i] = L -> key[L->key_num -1 - i];
@@ -611,38 +596,83 @@ void redistribute(bpt_node *L, bpt_node *S)
 
 			}
 		} else {
-			entry* dummy = new entry;
-			dummy = find_parent_entry((bpt_node*)S->father, S);
 
-			L -> key[L -> key_num] = dummy -> key;
-			L -> pointer[L -> key_num + 1] = S -> pointer[i];
+			if(L -> key_num < S -> key_num) { 
 
-			// move child father
-			((bpt_node *)L -> pointer[L -> key_num + 1])->father = L;
+				entry* dummy = new entry;
+				dummy = find_parent_entry((bpt_node*)S->father, S);
 
-			for(int j=0;j<((bpt_node*)S->father)->key_num; j++) {
-				if(((bpt_node*)S->father) -> key[j] = dummy -> key) {
-					((bpt_node*)S->father) -> key[j] = S -> key[i];
+				L -> key[L -> key_num] = dummy -> key;
+				L -> pointer[L -> key_num + 1] = S -> pointer[i];
+
+				// move child father
+				((bpt_node *)L -> pointer[L -> key_num + 1])->father = L;
+
+				for(int j=0;j<((bpt_node*)S->father)->key_num; j++) {
+					if(((bpt_node*)S->father) -> key[j] = dummy -> key) {
+						((bpt_node*)S->father) -> key[j] = S -> key[i];
+						break;
+					}
+				}
+
+
+				for(int k=0; k<S->key_num; k ++) {
+					if(k < S->key_num - 1) {
+						S -> key[k] = S -> key[k+1];
+						S -> key[k + 1] = 0;
+					}
+
+					S->pointer[k] = S->pointer[k+1];
+					S -> pointer[k + 1] = NULL;
+				}
+
+				--S -> key_num;
+				++L -> key_num;
+
+				if(L -> key_num >= M/2) {
 					break;
 				}
-			}
+			} else {
+				entry* dummy = new entry;
+				dummy = find_parent_entry((bpt_node*)S->father, S);
 
 
-			for(int k=0; k<S->key_num; k ++) {
-				if(k < S->key_num - 1) {
-					S -> key[k] = S -> key[k+1];
-					S -> key[k + 1] = 0;
+				cout<< ((bpt_node*)L->father)->key[0];
+				cout<<L->key[0];
+				for(int j=0;j<((bpt_node*)L->father)->key_num; j++) {
+					if(((bpt_node*)L->father) -> key[j] = dummy -> key) {
+						((bpt_node*)L->father) -> key[j] = L -> key[L -> key_num -1 - i];
+						break;
+					}
 				}
 
-				S->pointer[k] = S->pointer[k+1];
-				S -> pointer[k + 1] = NULL;
-			}
+				for(int k=0; k<S->key_num; k ++) {
+					
+					if(k == 0) {
+						S -> pointer[S -> key_num + 1] = S -> pointer[S -> key_num];
+					}
 
-			--S -> key_num;
-			++L -> key_num;
+					S -> key[S -> key_num - k] = S -> key[k];
+					S -> pointer[S -> key_num - k] = S -> pointer[k];
+	
+				}
 
-			if(L -> key_num >= M/2) {
-				break;
+				S -> key[0] = dummy -> key;
+				S -> pointer[0] = L -> pointer[L -> key_num - i];
+
+				L -> pointer[L -> key_num - i] = NULL; 
+				L -> key[L -> key_num -1 - i] = 0;
+
+				// move child father
+				((bpt_node *)S -> pointer[0]) -> father = S;
+
+				++S -> key_num;
+				--L -> key_num;
+
+				if(S -> key_num >= M/2) {
+					break;
+				}
+
 			}
 		}
 	}
@@ -680,7 +710,8 @@ void merge(bpt_node *L, bpt_node *S)
 	}
 }
 
-void replace_parent_entry(bpt_node *nodepointer, int key, bpt_node *pointer_to_replace) {
+void replace_parent_entry(bpt_node *nodepointer, int key, bpt_node *pointer_to_replace) 
+{
 
 	for(int i=0; i<nodepointer->key_num; i++) {
 		// Not sure having other conditions....
@@ -691,7 +722,8 @@ void replace_parent_entry(bpt_node *nodepointer, int key, bpt_node *pointer_to_r
 	}
 }
 
-void replace_key(bpt_node *nodepointer, int key, int key_to_replace) {
+void replace_key(bpt_node *nodepointer, int key, int key_to_replace) 
+{
 
 	for(int i=0; i<nodepointer->key_num; i++) {
 		if (nodepointer -> key[i] == key_to_replace) {
@@ -701,7 +733,8 @@ void replace_key(bpt_node *nodepointer, int key, int key_to_replace) {
 	}
 }
 		
-entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace) {
+entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace) 
+{
 
 	for(int i=0; i<nodepointer->key_num; i++) {
 		if (nodepointer -> pointer[i + 1] == pointer_to_replace) {
@@ -715,7 +748,8 @@ entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace) {
 }
 
 
-void traverse(bpt_node *nodepointer) {
+void traverse(bpt_node *nodepointer) 
+{
 
 	for(int i=0; i<nodepointer -> key_num; i++) {
 		if(i == 0 && nodepointer->is_leaf)
@@ -739,7 +773,8 @@ void traverse(bpt_node *nodepointer) {
 	return;
 }
 
-void print_leaf_ascending(bpt_node *nodepointer) {
+void print_leaf_ascending(bpt_node *nodepointer) 
+{
 	if(!nodepointer->is_leaf) {
 		print_leaf_ascending((bpt_node *)nodepointer->pointer[0]);
 	} else {
@@ -755,7 +790,8 @@ void print_leaf_ascending(bpt_node *nodepointer) {
 	}
 }
 
-void print_leaf_descending(bpt_node *nodepointer) {
+void print_leaf_descending(bpt_node *nodepointer) 
+{
 	if(!nodepointer->is_leaf) {
 		print_leaf_descending((bpt_node *)nodepointer->pointer[nodepointer -> key_num]);
 	} else {
@@ -771,34 +807,3 @@ void print_leaf_descending(bpt_node *nodepointer) {
 	}
 }
 
-int main() {
-	int key[13] = {3,5,6,8,9,22,44,13,27,31,24,37,41};
-	//int key[8] = {3,4,1,5,2,9,6,8};
-	//int key[21] = {1,2,3,4,5,6,7,8,9,10,31,27,44,37,41,22,13,24,11,55,51};
-	initial_bpt();
-
-	for(int i=0; i<sizeof(key)/sizeof(key[0]); i++) {
-		entry *dummy= new entry;
-		dummy -> key = key[i];
-		insert(root, dummy);
-	}
-
-	traverse(root);
-	cout << "split count: "<< splite_count << endl;
-	print_leaf_descending(root);
-	//int key_to_delete[5] = {27,1, 9, 44, 5};
-	int key_to_delete[8] = {3,9, 5,10, 27, 13, 2, 7};
-
-	for(int i=0; i<sizeof(key_to_delete)/sizeof(key_to_delete[0]); i++) {
-		cout<<"delete key: "<<key_to_delete[i] << endl;
-
-		entry *dummy = new entry;
-		delete_entry(root, key_to_delete[i], dummy);
-	}
-
-	cout<<"leaf: "<<endl;
-	print_leaf_descending(root);
-	traverse(root);
-
-	return 0;
-}

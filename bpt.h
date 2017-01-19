@@ -5,9 +5,12 @@
 #include <string>
 #include <vector>
 
-// Integer, 512 bytes page, +1 for overflow
+// Integer, M: 512 bytes page ==> 63 +1 for overflow
+// Character,N: 37 ==> 36 +1 for overflow
 //const int M = 64 ;
-const int M = 3 ;
+const int M = 5 ;
+const int N = 37;
+
 struct rid 
 {
 	unsigned short int page_id ;
@@ -37,10 +40,13 @@ struct bpt_node
 
 extern int node_count ;
 extern int splite_count ;
+extern bpt_node *root ;
 extern void initial_bpt() ;
-extern void insert(bpt_node *nodepointer, entry **entry);
+extern void insert(bpt_node *nodepointer, entry *entry);
 extern void traverse(bpt_node *nodepointer);
 extern void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry) ;
+extern void print_leaf_ascending(bpt_node *nodepointer);
+extern void print_leaf_descending(bpt_node *nodepointer);
 
 
 #endif
