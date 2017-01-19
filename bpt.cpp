@@ -164,7 +164,14 @@ void insert_in_node( bpt_node *node , entry *child)
         node -> pointer[ i ] = node -> pointer[ i - 1 ] ;
 
     node -> key[ x ] = child -> key ;
-    node -> pointer[ x + 1 ] = child -> value ;
+
+    if(node->is_leaf && child -> info != 0) {
+    	node -> pointer[ x + 1 ] = child -> info;
+    	child -> info = NULL;
+    }
+    else
+    	node -> pointer[ x + 1 ] = child -> value ;
+    
     node -> key_num += 1 ;
 
     if ( node -> key_num == M ) // need to split
@@ -201,25 +208,26 @@ void split( bpt_node *node, entry *child)
 
     	}
 	}
-    else {
-    	nodd -> key_num = M - M / 2;
+    else 
+    {
 
     	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
     	{
 	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) ] ;
-	        nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) ] ;
+	        nodd -> pointer[ i + 1 ] = node -> pointer[ i + ( M / 2 ) + 1] ;
 
 
 	        //empty it
 	        node -> key[ i + ( M / 2 ) ] = 0;
-			node -> pointer[ i + ( M / 2 ) ] = NULL;
+			//node -> pointer[ i + ( M / 2 ) + 1] = NULL;
     	}
     }
 
     nodd -> pointer[ nodd -> key_num ] = node -> pointer[ M ] ; // pointer when key > km
 
-    if(!node->is_leaf)
+    if(!node->is_leaf) {
     	((bpt_node *)nodd -> pointer[ nodd -> key_num ])->father = nodd;
+    }
     
     node -> pointer[ M ] = NULL;
     node -> key_num = M / 2 ;
@@ -567,7 +575,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 			// Moving from right
 			if(L -> key_num < S -> key_num) { 
 				L -> key[L -> key_num] = S -> key[i];
-				L -> pointer[L->key_num] = S -> pointer[i];
+				L -> pointer[L->key_num + 1] = S -> pointer[i + 1];
 
 				entry *dummy = new entry;
 				delete_in_node(S, S->key[i], dummy);
@@ -580,11 +588,11 @@ void redistribute(bpt_node *L, bpt_node *S)
 				//Shift S key
 				for(int j=S -> key_num;j>0;j--) {
  					S -> key[j] = S -> key[j-1];
- 					S -> pointer[j] = S -> pointer[j]; 					
+ 					S -> pointer[j+1] = S -> pointer[j]; 					
 				}
 
-				S -> key[i] = L -> key[L->key_num -1 - i];
-				S -> pointer[i] = L -> pointer[L -> key_num - 1 - i];
+				S -> key[i] = L -> key[L->key_num - 1 - i];
+				S -> pointer[i + 1] = L -> pointer[L -> key_num - i];
 
 				entry *dummy = new entry;
 				delete_in_node(L, L->key[L->key_num -1 - i], dummy);
@@ -683,12 +691,17 @@ void redistribute(bpt_node *L, bpt_node *S)
 void merge(bpt_node *L, bpt_node *S) 
 {
 	for(int i=0; i<M; i++) {
-		L -> key[L -> key_num] = S -> key[i];
-		L -> pointer[L -> key_num] = S -> pointer[i];
+		if(!L-> is_leaf) {
+			L -> key[L -> key_num] = S -> key[i];
+			L -> pointer[L -> key_num] = S -> pointer[i];
+		} else {
+			L -> key[L -> key_num] = S -> key[i];
+			L -> pointer[L -> key_num + 1] = S -> pointer[i + 1];
+		}
 
 		//cout<<((bpt_node *)L -> pointer[L -> key_num]);
 
-		if(((bpt_node *)L -> pointer[L -> key_num]) != 0)
+		if(((bpt_node *)L -> pointer[L -> key_num]) != 0 && !L->is_leaf)
 			((bpt_node *)L -> pointer[L -> key_num]) -> father = L;
 
 		++L -> key_num;
@@ -781,7 +794,9 @@ void print_leaf_ascending(bpt_node *nodepointer)
 		while(nodepointer != 0) {
 			for (int i = 0; i < nodepointer->key_num; i++)
 			{
-				printf("%d ", nodepointer->key[i]);
+				printf("key: %d ,", nodepointer->key[i]);
+				//cout<< ((rid*)nodepointer->pointer[i+1]);
+				printf("slot id: %u ;", ((rid*)nodepointer->pointer[i+1])->slot_id);
 			}
 
 			printf("\nkey num: %d\n", nodepointer->key_num);

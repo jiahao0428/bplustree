@@ -7,7 +7,7 @@
 
 // Integer, M: 512 bytes page ==> 63 +1 for overflow
 // Character,N: 37 ==> 36 +1 for overflow
-//const int M = 64 ;
+// const int M = 64 ;
 const int M = 5 ;
 const int N = 37;
 
@@ -21,6 +21,7 @@ struct entry
 {
 	int key;
 	void *value;
+	rid *info;
 } ;
 
 struct bpt_node
