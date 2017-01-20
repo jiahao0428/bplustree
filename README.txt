@@ -14,7 +14,7 @@ $ ./bpt ProjectB_data.txt log.txt
 
 The first argument to the file is the input, while the second is the output file.
 You can supply your own filenames for it.
-There is one last way to execute it, which is also an exception to the last way:
+There is one last way to execute it, which is also an exception to the previous way:
 
 $ ./bpt ProjectB_data.txt stdout
 
