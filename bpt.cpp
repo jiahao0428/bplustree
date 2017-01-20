@@ -859,7 +859,8 @@ void print_leaf_ascending(bpt_node *nodepointer)
 			{
 				printf("key: %d ,", nodepointer->key[i]);
 				//cout<< ((rid*)nodepointer->pointer[i+1]);
-				printf("slot id: %u ;", ((rid*)nodepointer->pointer[i+1])->slot_id);
+				printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
+				printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
 			}
 
 			printf("\nkey num: %d\n", nodepointer->key_num);
