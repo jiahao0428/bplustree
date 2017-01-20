@@ -1,30 +1,29 @@
-Sample Input data:
------------------------------------
-R, Chat, integer, 90
-20 lines of multiple insert (separated by ';' with 2~7 key-record pairs): 
-200 lines of insert (single key-record)
-20 lines of deletion with existed keys
+In the folder you should find the following four files: bpt.h bpt.cpp cbpt.cpp dbio.cpp
+The source code is written in C++, and can be compiled by setting the .cpp files as target.
+e.g. running "g++ -o bpt dbio.cpp bpt.cpp cbpt.cpp" under a Linux shell to get executable file "bpt".
+For simplicity a Makefile is included, which does exactly that.
 
-R, Movie, String, 100
-20 lines of multiple insert (separated by ';' with 2~7 key-record pairs): 
-150 lines of insert (single key-record)
-15 lines of deletion with existed keys
+The executable file can be run as is, like so: ($ represents the shell)
 
-Sample Test data:
-------------------------------------
-Scan Chat
-Scan Movie
+$ ./bpt
 
-15 lines of single value index search for "Chat"
-15 lines of single value index search for "Movie"
+It will take file "ProjectB_data.txt" as input and output to file "log.txt".
+Another way to use it is to run it like so:
 
-10 lines of range query for "Chat"
-10 lines of range query for "Movie"
+$ ./bpt ProjectB_data.txt log.txt
 
-4 lines of display data page (2 for each relations)
+The first argument to the file is the input, while the second is the output file.
+You can supply your own filenames for it.
+There is one last way to execute it, which is also an exception to the last way:
 
-c Chat
-c Movie
+$ ./bpt ProjectB_data.txt stdout
 
-20 lines of error handling
-(8 lines of missing input information, 7 lines of illegal input starting other than <R, I, D, S, q, c, d, p> and 5 lines illegal query)
+By putting "stdout" as second argument, the file outputs to terminal instead.
+Yes, this means you can't specify "stdout" as your output file name.
+
+One last feature: in the dbio.cpp file, if you modify the code by removing "//" before the eleventh line,
+
+//#define DBIO_LOG_OUTPUT
+
+The output will now become a lot more verbose, and print out something everytime it finishes a R, I, or D instruction.
+It is commented-out by default since it is very verbose.
