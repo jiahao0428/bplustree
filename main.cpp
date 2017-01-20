@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstring>
 #include "bpt.h"
-#include <iostream>
 
 using namespace std;
 
