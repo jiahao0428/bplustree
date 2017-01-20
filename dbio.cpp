@@ -8,6 +8,7 @@
 #define REL_NAME_LEN 256
 #define RECORD_MAX_LEN 512
 
+//#define DBIO_LOG_OUTPUT
 
 class PageInteger {
 
@@ -220,9 +221,13 @@ class RelationInteger {
 
 	bool initialized;
 
+	bool WriteEmptyMode;
+	PageInteger* WriteEmptyModePagePointer;
+	int WriteEmptyModePageID;
+
 	public:
 
-	RelationInteger() : NumberOfPages(1), initialized(false) {
+	RelationInteger() : NumberOfPages(1), initialized(false), WriteEmptyMode(true), WriteEmptyModePageID(0) {
 		try{
 			PageList = new PageInteger ();
 		}
@@ -230,6 +235,7 @@ class RelationInteger {
 			fprintf(stderr,"Error allocating Space...\n");
 			exit(1);
 		}
+		WriteEmptyModePagePointer = PageList;
 	}
 	~RelationInteger() {
 		PageInteger* Temp = PageList->NextPage();
@@ -268,21 +274,36 @@ class RelationInteger {
 		PageInteger* CurrentPage = PageList;
 		unsigned short SlotNumber;
 
-		int N, i = 0;
-		N = CurrentPage->CanInsertRecord(RecordMaxLength);
-		while (N == -2) {
-			if (CurrentPage->NextPage() == NULL) {
-				CurrentPage = CurrentPage->AllocateNewPage();
-				NumberOfPages++;
-			} else {
-				CurrentPage = CurrentPage->NextPage();
-			}
-			i++;
+		int N = -1, PageCounter = 0;
+
+		if (WriteEmptyMode && WriteEmptyModePagePointer->CanInsertRecord(RecordMaxLength) == -1) {
+			CurrentPage = WriteEmptyModePagePointer;
+			PageCounter = WriteEmptyModePageID;
+		} else {
+			WriteEmptyMode = false;
 			N = CurrentPage->CanInsertRecord(RecordMaxLength);
+			while (N == -2) {
+				PageCounter++;
+				if (CurrentPage->NextPage() == NULL) {
+					CurrentPage = CurrentPage->AllocateNewPage();
+					NumberOfPages++;
+					WriteEmptyMode = true;
+					WriteEmptyModePagePointer = CurrentPage;
+					WriteEmptyModePageID = PageCounter;
+				} else {
+					CurrentPage = CurrentPage->NextPage();
+				}
+				N = CurrentPage->CanInsertRecord(RecordMaxLength);
+			}
 		}
 
 		SlotNumber = CurrentPage->InsertRecordInternal(Key,Record,RecordMaxLength,N);
-		return rid({(unsigned short)i,SlotNumber});
+
+		rid Temp;
+		Temp.page_id = (unsigned short) PageCounter;
+		Temp.slot_id = SlotNumber;
+
+		return Temp;
 	}
 
 	void DeleteRecord(rid ParamRID, FILE* OutputFile) {
@@ -294,7 +315,9 @@ class RelationInteger {
 			if (Temp->NextPage() != NULL)
 				Temp = Temp->NextPage();
 			else {
-				fprintf(OutputFile,"Invalid Page Access: asked for Page %d, but there are only %d pages starting at page 0.\n",PageID,GetNumberOfPages());
+#ifdef DBIO_LOG_OUTPUT
+				fprintf(OutputFile,"Error: Invalid Page Access: asked for Page %d, but there are only %d pages starting at page 0.\n",PageID,GetNumberOfPages());
+#endif
 				return;
 			}
 		}
@@ -310,7 +333,7 @@ class RelationInteger {
 			if (Temp->NextPage() != NULL)
 				Temp = Temp->NextPage();
 			else {
-				fprintf(OutputFile,"Invalid Page Access: asked for Page %d, but there are only %d pages starting at page 0.\n",PageID,GetNumberOfPages());
+				fprintf(OutputFile,"Error: Invalid Page Access: asked for Page %d, but there are only %d pages starting at page 0.\n",PageID,GetNumberOfPages());
 				return;
 			}
 		}
@@ -332,7 +355,7 @@ class RelationInteger {
 				Temp = Temp->NextPage();
 			}
 			else {
-				fprintf(OutputFile,"Invalid Page Access: asked for Page %d, but there are only %d pages starting at page 0.\n",PageID,GetNumberOfPages());
+				fprintf(OutputFile,"Error: Invalid Page Access: asked for Page %d, but there are only %d pages starting at page 0.\n",PageID,GetNumberOfPages());
 				return;
 			}
 		}
@@ -352,9 +375,13 @@ class RelationString {
 
 	bool initialized;
 
+	bool WriteEmptyMode;
+	PageString* WriteEmptyModePagePointer;
+	int WriteEmptyModePageID;
+
 	public:
 
-	RelationString() : NumberOfPages(1), initialized(false) {
+	RelationString() : NumberOfPages(1), initialized(false), WriteEmptyMode(true), WriteEmptyModePageID(0) {
 		try{
 			PageList = new PageString ();
 		}
@@ -362,6 +389,7 @@ class RelationString {
 			fprintf(stderr,"Error allocating Space...\n");
 			exit(1);
 		}
+		WriteEmptyModePagePointer = PageList;
 	}
 	~RelationString() {
 		PageString* Temp = PageList->NextPage();
@@ -399,21 +427,36 @@ class RelationString {
 		PageString* CurrentPage = PageList;
 		unsigned short SlotNumber;
 
-		int N, i = 0;
-		N = CurrentPage->CanInsertRecord(RecordMaxLength);
-		while (N == -2) {
-			if (CurrentPage->NextPage() == NULL) {
-				CurrentPage = CurrentPage->AllocateNewPage();
-				NumberOfPages++;
-			} else {
-				CurrentPage = CurrentPage->NextPage();
-			}
-			i++;
+		int N = -1, PageCounter = 0;
+
+		if (WriteEmptyMode && WriteEmptyModePagePointer->CanInsertRecord(RecordMaxLength) == -1) {
+			CurrentPage = WriteEmptyModePagePointer;
+			PageCounter = WriteEmptyModePageID;
+		} else {
+			WriteEmptyMode = false;
 			N = CurrentPage->CanInsertRecord(RecordMaxLength);
+			while (N == -2) {
+				PageCounter++;
+				if (CurrentPage->NextPage() == NULL) {
+					CurrentPage = CurrentPage->AllocateNewPage();
+					NumberOfPages++;
+					WriteEmptyMode = true;
+					WriteEmptyModePagePointer = CurrentPage;
+					WriteEmptyModePageID = PageCounter;
+				} else {
+					CurrentPage = CurrentPage->NextPage();
+				}
+				N = CurrentPage->CanInsertRecord(RecordMaxLength);
+			}
 		}
 
 		SlotNumber = CurrentPage->InsertRecordInternal(Key,Record,RecordMaxLength,N);
-		return rid({(unsigned short)i,SlotNumber});
+
+		rid Temp;
+		Temp.page_id = (unsigned short) PageCounter;
+		Temp.slot_id = SlotNumber;
+
+		return Temp;
 	}
 
 	void DeleteRecord(rid ParamRID,FILE* OutputFile) {
@@ -512,6 +555,7 @@ int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 		RelationName[i] = *Current++;
 	}
 	if (i == REL_NAME_LEN) return -2; // bad RelNameLen
+	if (i == 0) return -8; // bad RelName
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
@@ -529,7 +573,7 @@ int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 		Current += 6;
 		output_code = 2;
 	}
-	else return -1;
+	else return -7; // bad data-type
 	SkipWhiteSpaces(Current);
 
 	// Read third comma,
@@ -552,7 +596,9 @@ int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 	if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) return -4; // Relation name already in use
 
 	if (output_code == 1) {
+#ifdef DBIO_LOG_OUTPUT
 		fprintf(OutputFile,"Creating integer relation with name \"%s\" with length %d\n", RelationName, RecordLength);
+#endif
 		RelInt.SetName(RelationName);
 		RelInt.SetRecordMaxLength(RecordLength);
 		RelInt.SetInitialized();
@@ -561,7 +607,9 @@ int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 		initial_bpt(RelationName);
 		/*             */
 	} else {
+#ifdef DBIO_LOG_OUTPUT
 		fprintf(OutputFile,"Creating String relation with name \"%s\" with length %d\n", RelationName, RecordLength);
+#endif
 		RelStr.SetName(RelationName);
 		RelStr.SetRecordMaxLength(RecordLength);
 		RelStr.SetInitialized();
@@ -589,7 +637,7 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 	SkipWhiteSpaces(Current);
 
 	// Check first comma,
-	if (*Current != ',') return -1; // illegal input
+	if (*Current != ',') return -1; // bad comma
 	++Current;
 	SkipWhiteSpaces(Current);
 
@@ -598,12 +646,13 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 	for (i = 0; i < 256 && *Current != ' ' && *Current != ',' && *Current != '\n' ;i++) {
 		RelationName[i] = *Current++;
 	}
-	if (i == 256) return -1;
+	if (i == 256) return -2; // bad relnamelen
+	if (i == 0) return -3; // empty relname
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
 	// Check second comma,
-	if (*Current != ',') return -1; // illegal input
+	if (*Current != ',') return -1; // bad comma
 	++Current;
 	SkipWhiteSpaces(Current);
 
@@ -611,30 +660,30 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 	bool InsertToInt;
 	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) InsertToInt = true; // Insert to RelInt
 	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) InsertToInt = false; // Insert to RelStr
-	else return -3; // RelName did not match
+	else return -4; // relname mismatch
 
 	for(i = 0; i < 7; i++) {
 		// read key,
 		if(InsertToInt) {
 			IntegerKey = parseInt(Current);
-			if (IntegerKey == -1) return -1; // bad integer
+			if (IntegerKey == -1) return -5; // bad integer
 		} else {
-			if (*Current != '\"') return -1; // illegal input
+			if (*Current != '\"') return -6; // bad dquote
 			++Current;
 			strncpy(StringKey,Current,10);
 			while(*Current != '\n' && *Current != '\"' ) Current++;
-			if (*Current != '\"') return -1; // illegal input
+			if (*Current != '\"') return -6; // bad dquote
 			++Current;
 		}
 		SkipWhiteSpaces(Current);
 
 		// Check third comma,
-		if (*Current != ',') return -1; // illegal input
+		if (*Current != ',') return -1; // bad comma
 		++Current;
 		SkipWhiteSpaces(Current);
 
 		// Check for '\"'
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 
 		// Read record
@@ -645,19 +694,13 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 		if (j == RECORD_MAX_LEN) {
 
 			while(*Current != '\n' && *Current != '\"') Current++;
-			if (*Current == '\n') {
-				fprintf(OutputFile,"Double quote \" expected but missing. \n");
-				return -1;
-			}
-			else return -2;
+			if (*Current == '\n') return -6; // bad dquote
+			else return -7; // bad reclen
 		}
 		Record[j] = '\0';
 
 		// Check for '\"'
-		if (*Current != '\"') {
-			fprintf(OutputFile,"Double quote \" expected but missing. \n");
-			return -1;
-		}
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 		SkipWhiteSpaces(Current);
 
@@ -665,14 +708,16 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 		if (InsertToInt) {
 			// RelInt
 			if((int) strlen(Record)+4 > RelInt.GetRecordLength()) {
-				fprintf(OutputFile,"Warning: specified record has total length = %d,", (int) strlen(Record)+4);
+				fprintf(OutputFile,"Warning: specified record has total length = %d, ", (int) strlen(Record)+4);
 				fprintf(OutputFile,"which cannot fit in the specified record length (%d). ", RelStr.GetRecordLength());
-				fprintf(OutputFile,"Only the first %d bytes of the string will be stored.\n",RelStr.GetRecordLength()-4);
+				fprintf(OutputFile,"Only the first %d bytes of the string will be stored.\n", RelStr.GetRecordLength()-4);
+				fprintf(OutputFile,"For debugging purposes, the record is printed here: \"%s\"\n", Record);
 				Record[RelInt.GetRecordLength()-4] = '\0';
 			}
 			rid RIDHolder = RelInt.InsertRecord(IntegerKey,Record);
+#ifdef DBIO_LOG_OUTPUT
 			fprintf(OutputFile,"Inserting record (%d,\"%s\") into \"%s\"\n", IntegerKey, Record, RelationName);
-
+#endif
 			/* Insert into tree */
 			entry *Entry= new entry;
 			rid *PointerRID = new rid (RIDHolder);
@@ -689,22 +734,25 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 				fprintf(OutputFile,"Warning: specified record has total length = %d,", (int) strlen(Record)+10);
 				fprintf(OutputFile,"which cannot fit with the specified record length (%d). ", RelStr.GetRecordLength());
 				fprintf(OutputFile,"Only the first %d bytes of the string will be stored.\n",RelStr.GetRecordLength()-10);
+				fprintf(OutputFile,"For debugging purposes, the record is printed here: \"%s\"\n", Record);
 				Record[RelStr.GetRecordLength()-10] = '\0';
 			}
 			rid RIDHolder = RelStr.InsertRecord(StringKey,Record);
+#ifdef DBIO_LOG_OUTPUT
 			fprintf(OutputFile,"Inserting record (\"%s\",\"%s\") into \"%s\"\n", StringKey, Record, RelationName);
+#endif
 		}
 
 		if (*Current == '\n') break;
 
-		if (i != 6 && *Current != ';') return -1; // bad multiple read
+		if (i != 6 && *Current != ';') return -8; // bad multiple read
 
 		++Current;
 		SkipWhiteSpaces(Current);
 	}
 
 	if (*Current == '\n') return i+1;
-	return -1;
+	return -9; // trailing
 }
 
 int ParseInstructionD(char* Buffer, RelationInteger& RelInt, RelationString& RelStr, FILE* OutputFile) {
@@ -720,7 +768,7 @@ int ParseInstructionD(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 	SkipWhiteSpaces(Current);
 
 	// Check first comma,
-	if (*Current != ',') return -1; // illegal input
+	if (*Current != ',') return -1; // bad comma
 	++Current;
 	SkipWhiteSpaces(Current);
 
@@ -729,12 +777,13 @@ int ParseInstructionD(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 	for (i = 0; i < 256 && *Current != ' ' && *Current != ',' && *Current != '\n' ;i++) {
 		RelationName[i] = *Current++;
 	}
-	if (i == 256) return -1;
+	if (i == 256) return -2; // bad relnamelen
+	if (i == 0) return -3; // empty relname
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
 	// Check for second comma,
-	if (*Current != ',') return -1; // illegal input
+	if (*Current != ',') return -1; // bad comma
 	++Current;
 	SkipWhiteSpaces(Current);
 
@@ -742,37 +791,46 @@ int ParseInstructionD(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 	bool IsIntRelation;
 	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
 	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
-	else return -3; // RelName did not match
+	else return -4; // relname mismatch
 
 	// Read Key
 	if(IsIntRelation) {
 		IntegerKey = parseInt(Current);
-		if (IntegerKey == -1) return -1; // bad integer
+		if (IntegerKey == -1) return -5; // bad integer
 	} else {
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 		strncpy(StringKey,Current,10);
 		while(*Current != '\n' && *Current != '\"' ) Current++;
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 	}
 	SkipWhiteSpaces(Current);
 
 	// Check for '\n'
-	if (*Current != '\n') return -1; // illegal input
+	if (*Current != '\n') return -7; // trailing
 
 	// Do BPT query + BPT deletion + page slot deletion
 	if(IsIntRelation) {
 		/* Tree query + Deletion */
 		rid* PointerRID = query(RelationName, IntegerKey);
+
 		delete_from_tree(IntegerKey);
 		/*                       */
-
+		if (PointerRID == NULL) {
+#ifdef DBIO_LOG_OUTPUT
+			fprintf(OutputFile,"Attempted to delete record with key %d, but it was not found.\n", IntegerKey);
+#endif
+			return 1; // key not found
+		}
+#ifdef DBIO_LOG_OUTPUT
 		fprintf(OutputFile,"Deleting record with key %d\n", IntegerKey);
+#endif
 		RelInt.DeleteRecord(*PointerRID,OutputFile);
 	} else {
+#ifdef DBIO_LOG_OUTPUT
 		fprintf(OutputFile,"Need to delete record with key \"%s\", but this is not implemented yet.\n", StringKey);
-
+#endif
 	}
 	return 1;
 }
@@ -783,7 +841,7 @@ int ParseInstructionScan(char* Buffer, RelationInteger& RelInt, RelationString& 
 
 	char* Current = Buffer + 4;
 	// Check it's actually "Scan"
-	if (strncmp(Buffer,"Scan",4)!=0) return -2; // Not Scan
+	if (strncmp(Buffer,"Scan",4)!=0) return -8; // Not Scan
 	SkipWhiteSpaces(Current);
 
 	// Read RelationName
@@ -791,27 +849,28 @@ int ParseInstructionScan(char* Buffer, RelationInteger& RelInt, RelationString& 
 	for (i = 0; i < 256 && *Current != ' ' && *Current != ',' && *Current != '\n' ;i++) {
 		RelationName[i] = *Current++;
 	}
-	if (i == 256) return -1; // too long
+	if (i == 256) return -2; // bad relnamelen
+	if (i == 0) return -3; // empty relname
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
 	// Check for '\n'
-	if (*Current != '\n') return -1;
+	if (*Current != '\n') return -7; // trailing
 
 	// match the relation-name read to either of our relations,
 	bool IsIntRelation;
 	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
 	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
-	else return -3; // RelName did not match
+	else return -4; // relname mismatch
 
 	/* Output BPT node/leaf count */
 	if (IsIntRelation) {
-		fprintf(OutputFile, "Telling tree info of \"%s\": # of leaf pages, # of total index pages.\n", RelationName);
+		fprintf(OutputFile, "Telling tree info of \"%s\": # of leaf pages, # of total index pages. Refer to Console.\n", RelationName);
 		/* Get tree info */
 		scan(RelationName);
 		/*               */
 	} else {
-		fprintf(OutputFile, "Telling tree info of \"%s\": # of leaf pages, # of total index pages.\n", RelationName);
+		fprintf(OutputFile, "Telling tree info of \"%s\": # of leaf pages, # of total index pages. ", RelationName);
 		fprintf(OutputFile, "This is not implemented yet.\n");
 	}
 
@@ -837,7 +896,8 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	for (i = 0; i < 256 && *Current != ' ' && *Current != ',' && *Current != '\n' ;i++) {
 		RelationName[i] = *Current++;
 	}
-	if (i == 256) return -1; // too long
+	if (i == 256) return -2; // bad relnamelen
+	if (i == 0) return -3; // empty relname
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
@@ -845,22 +905,21 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	bool IsIntRelation;
 	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
 	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
-	else return -3; // RelName did not match
+	else return -4; // relname mismatch
 
 	// Read Key1
 	if(IsIntRelation) {
 		IntegerKey1 = parseInt(Current);
-		if (IntegerKey1 == -1) return -1; // bad integer
+		if (IntegerKey1 == -1) return -5; // bad integer1
 	} else {
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 		strncpy(StringKey1,Current,10);
 		while(*Current != '\n' && *Current != '\"' ) Current++;
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 	}
 	SkipWhiteSpaces(Current);
-
 
 	if (*Current == '\n') {
 		if(IsIntRelation) {
@@ -880,13 +939,13 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	// Read Key2 if not '\n'
 	if(IsIntRelation) {
 		IntegerKey2 = parseInt(Current);
-		if (IntegerKey2 == -1) return -1; // bad integer
+		if (IntegerKey2 == -1) return -8; // bad integer2
 	} else {
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // illegal input
 		++Current;
 		strncpy(StringKey2,Current,10);
 		while(*Current != '\n' && *Current != '\"' ) Current++;
-		if (*Current != '\"') return -1; // illegal input
+		if (*Current != '\"') return -6; // illegal input
 		++Current;
 	}
 	SkipWhiteSpaces(Current);
@@ -906,7 +965,7 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 		}
 
 	}
-	return -1;
+	return -7; // trailing
 }
 
 int ParseInstructionLP(char* Buffer, RelationInteger& RelInt, RelationString& RelStr, FILE* OutputFile){
@@ -925,20 +984,21 @@ int ParseInstructionLP(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	for (i = 0; i < 256 && *Current != ' ' && *Current != ',' && *Current != '\n' ;i++) {
 		RelationName[i] = *Current++;
 	}
-	if (i == 256) return -1; // too long
+	if (i == 256) return -2; // bad relnamelen
+	if (i == 0) return -3; // empty relname
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
 	// Read PageID
 	PageID = parseInt(Current);
-	if (PageID == -1) return -1; // bad integer
+	if (PageID == -1) return -5; // bad integer
 	SkipWhiteSpaces(Current);
 
 	// match the relation-name read to either of our relations,
 	bool IsIntRelation;
 	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
 	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
-	else return -3; // RelName did not match
+	else return -4; // RelName did not match
 
 	if (*Current == '\n') {
 		if (IsIntRelation) {
@@ -950,7 +1010,7 @@ int ParseInstructionLP(char* Buffer, RelationInteger& RelInt, RelationString& Re
 		}
 		return 1;
 	}
-	return -1;
+	return -7;
 }
 
 int ParseInstructionLC(char* Buffer, RelationInteger& RelInt, RelationString& RelStr, FILE* OutputFile) {
@@ -966,7 +1026,8 @@ int ParseInstructionLC(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	for (i = 0; i < 256 && *Current != ' ' && *Current != ',' && *Current != '\n' ;i++) {
 		RelationName[i] = *Current++;
 	}
-	if (i == 256) return -1; // too long
+	if (i == 256) return -2; // too long
+	if (i == 0) return -3;
 	RelationName[i] = '\0';
 	SkipWhiteSpaces(Current);
 
@@ -974,7 +1035,7 @@ int ParseInstructionLC(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	bool IsIntRelation;
 	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
 	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
-	else return -3; // RelName did not match
+	else return -4; // RelName did not match
 
 	fprintf(OutputFile,"Displaying statistics of relation \"%s\":\n",RelationName);
 
@@ -990,13 +1051,30 @@ int ParseInstructionLC(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	}
 
 	if (*Current == '\n') return 1;
-	return -1;
+	return -7;
 }
 
-int main () {
+int main (int argc, char* argv[]) {
 
-	FILE* InputFile = fopen("projectB_data.txt","r");
-	FILE* OutputFile = fopen("log.txt","w");
+	FILE* InputFile;
+	FILE* OutputFile;
+
+	if (argc == 1) {
+		InputFile = fopen("ProjectB_data.txt","r");
+//		InputFile = stdin;
+		OutputFile = fopen("log.txt","w");
+//		OutputFile = stdout;
+	} else if (argc >= 3) {
+
+		InputFile = fopen(argv[1],"r");
+
+		if (strcmp("stdout",argv[2])==0) {
+			OutputFile = stdout;
+		}
+		else {
+			OutputFile = fopen(argv[2],"w");
+		}
+	}
 
 	if (InputFile == NULL || OutputFile == NULL) {
 		fprintf(stderr,"Error opening files.\n");
@@ -1013,80 +1091,103 @@ int main () {
 		switch (Buffer[0]) {
 			case 'R':
 				switch(ParseInstructionR(Buffer,RelInt,RelStr,OutputFile)){
-					case -6: break;
-					case -5: break;
-					case -4: fprintf(OutputFile,"The name is already in use.\n"); break;
-					case -3: fprintf(OutputFile,"The relation (int or string) is already initialized. This program can only initialize one of each.\n"); break;
-					case -2: fprintf(OutputFile,"relation-name field in \"R, relation-name, data-type, record-length\" to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
-					case -1: fprintf(OutputFile,"Comma ',' is expected but missing.\n"); break;
-					case 1:
-					case 2:
-						break;
+					case -8: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -7: fprintf(OutputFile,"Error: data-type field should match \"integer\" or \"String\" exactly (no double quotes).\n"); break;
+					case -6: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -5: fprintf(OutputFile,"Error: Expected a nonnegative integer for record-length field.\n"); break;
+					case -4: fprintf(OutputFile,"Error: The name is already in use.\n"); break;
+					case -3: fprintf(OutputFile,"Error: The relation (integer or string) is already initialized. This program can only initialize one of each.\n"); break;
+					case -2: fprintf(OutputFile,"Error: relation-name field exceeded the expected length %d.\n", REL_NAME_LEN); break;
+					case -1: fprintf(OutputFile,"Error: Comma ',' expected but it was not present.\n"); break;
+					default: break;
 				}
 				break;
 			case 'I':
 				switch(int N = ParseInstructionI(Buffer, RelInt, RelStr,OutputFile)){
-					case -4: fprintf(OutputFile,"This line requires inserting a record that's too long, hence cancelled regardless of its validness.\n");
-					case -3: fprintf(OutputFile,"No matching Relation with name.\n"); break;
-					case -2: fprintf(OutputFile,"Input is illegal, or string to be read is longer than expected length.\n"); break;
-					case -1: fprintf(OutputFile,"Input is illegal.\n"); break;
+					case -9: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -8: fprintf(OutputFile,"Error: Trailing symbols found, or incorrect usage of multiple inserts.\n"); break;
+					case -7: fprintf(OutputFile,"Error: Record length exceeded the expected maximum record length %d.\n",RECORD_MAX_LEN); break;
+					case -6: fprintf(OutputFile,"Error: Double quotation mark '\"' expected but it was not present.\n"); break;
+					case -5: fprintf(OutputFile,"Error: Expected a nonnegative integer for key-value field.\n"); break;
+					case -4: fprintf(OutputFile,"Error: relation-name did not match any relations.\n"); break;
+					case -3: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -2: fprintf(OutputFile,"Error: relation-name field to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
+					case -1: fprintf(OutputFile,"Error: Comma ',' expected but it was not present.\n"); break;
 					default:
+#ifdef DBIO_LOG_OUTPUT
 						fprintf(OutputFile,"> Inserted %d record", N);
 						if (N!=1) fprintf(OutputFile,"s");
 						fprintf(OutputFile,".\n");
+#endif
 						break;
 				}
 				break;
 			case 'D':
 				switch(ParseInstructionD(Buffer, RelInt, RelStr,OutputFile)) {
-					case -1: fprintf(OutputFile,"Input is illegal.\n"); break;
-					case 1: break;
+					case -7: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -6: fprintf(OutputFile,"Error: Double quotation mark '\"' expected but it was not present.\n"); break;
+					case -5: fprintf(OutputFile,"Error: Expected a nonnegative integer for key-value field.\n"); break;
+					case -4: fprintf(OutputFile,"Error: relation-name did not match any relations specified.\n"); break;
+					case -3: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -2: fprintf(OutputFile,"Error: relation-name field to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
+					case -1: fprintf(OutputFile,"Error: Comma ',' expected but it was not present.\n"); break;
+					default: break;
 				}
 				break;
 			case 'S':
 				switch(ParseInstructionScan(Buffer, RelInt, RelStr,OutputFile)) {
-					case -2:
+					case -7: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -4: fprintf(OutputFile,"Error: relation-name did not match any relations specified.\n"); break;
+					case -3: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -2: fprintf(OutputFile,"Error: relation-name field to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
+					case -8:
 						char* ch;
 						ch = strchr(Buffer,' '); if(ch != NULL) *ch = '\0';
 						ch = strchr(Buffer,'\"'); if(ch != NULL) *ch = '\0';
 						ch = strchr(Buffer,'\n'); if(ch != NULL) *ch = '\0';
-						fprintf(OutputFile,"No such instruction: \"%s\".\n", Buffer);
+						fprintf(OutputFile,"Error: No such instruction: \"%s\".\n", Buffer);
 						break;
-					case -1: fprintf(OutputFile,"Input is illegal.\n"); break;
-					case 1: break;
+					default: break;
 				}
 				break;
 			case 'q':
 				switch(ParseInstructionLQ(Buffer, RelInt, RelStr,OutputFile)) {
-					case -1: fprintf(OutputFile,"Input is illegal.\n"); break;
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-						break;
+					case -8: fprintf(OutputFile,"Error: Expected a nonnegative integer for key-value2 field.\n"); break;
+					case -7: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -6: fprintf(OutputFile,"Error: Double quotation mark '\"' expected but it was not present.\n"); break;
+					case -5: fprintf(OutputFile,"Error: Expected a nonnegative integer for key-value/key-value1 field.\n"); break;
+					case -4: fprintf(OutputFile,"Error: relation-name did not match any relations specified.\n"); break;
+					case -3: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -2: fprintf(OutputFile,"Error: relation-name field to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
+					default: break;
 				}
 				break;
 			case 'p':
 				switch(ParseInstructionLP(Buffer,RelInt,RelStr,OutputFile)) {
-					case -1: fprintf(OutputFile,"Input is illegal.\n"); break;
-					case -3: fprintf(OutputFile,"No Relation matched the name.\n"); break;
-					case 1:
-						break;
+					case -7: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -5: fprintf(OutputFile,"Error: Expected a nonnegative integer page-id field.\n"); break;
+					case -4: fprintf(OutputFile,"Error: relation-name did not match any relations specified.\n"); break;
+					case -3: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -2: fprintf(OutputFile,"Error: relation-name field to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
+					default: break;
 				}
 				break;
 			case 'c':
 				switch(ParseInstructionLC(Buffer,RelInt,RelStr,OutputFile)) {
-					case -1: fprintf(OutputFile,"Input is illegal.\n"); break;
-					case -3: fprintf(OutputFile,"No Relation matched the name.\n"); break;
-					case 1:
-						break;
+					case -7: fprintf(OutputFile,"Error: Trailing symbols found.\n"); break;
+					case -4: fprintf(OutputFile,"Error: relation-name did not match any relations specified.\n"); break;
+					case -3: fprintf(OutputFile,"Error: relation-name should not be empty.\n");break;
+					case -2: fprintf(OutputFile,"Error: relation-name field to be read is longer than expected length (%d).\n", REL_NAME_LEN); break;
+					default: break;
 				}
 				break;
 			case '\n':
+#ifdef DBIO_LOG_OUTPUT
 				fprintf(OutputFile,"\n");
+#endif
 				break;
 			case ' ':
-				fprintf(OutputFile,"Input should not start with an empty space.\n");
+				fprintf(OutputFile,"Error: Input should not start with an empty space.\n");
 				break;
 			default:
 				char* ch;
@@ -1094,14 +1195,18 @@ int main () {
 				ch = strchr(Buffer,'\"'); if(ch != NULL) *ch = '\0';
 				ch = strchr(Buffer,'\n'); if(ch != NULL) *ch = '\0';
 
-				fprintf(OutputFile,"No such instruction: \"%s\".\n", Buffer);
+				fprintf(OutputFile,"Error: No such instruction: \"%s\".\n", Buffer);
 		}
 	}
 	if (ferror(InputFile) != 0) {
 		fprintf(stderr,"Error reading file.\n");
 	} else if (feof(InputFile) != 0){
-		fprintf(stderr,"End of file reached.\n");
+		//fprintf(stderr,"End of file reached.\n");
 	}
+
+	fclose(InputFile);
+	fclose(OutputFile);
+
 
 	return 0;
 }
