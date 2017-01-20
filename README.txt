@@ -27,3 +27,4 @@ One last feature: in the dbio.cpp file, if you modify the code by removing "//" 
 
 The output will now become a lot more verbose, and print out something everytime it finishes a R, I, or D instruction.
 It is commented-out by default since it is very verbose.
+Note that it was designed with it in mind, hence you may get more warnings of unused variables if you left it as a comment.
