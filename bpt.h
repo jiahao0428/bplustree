@@ -11,8 +11,9 @@
 const int M = 64 ;
 const int N = 37;
 
-const std::string TYPE_INT = "i";
-const std::string TYPE_CHAR = "A11_c";
+
+#define TYPE_INT = "i";
+#define TYPE_CHAR = "A11_c";
 
 struct rid 
 {
@@ -33,6 +34,7 @@ struct bpt_node
     bool is_root ;
     int key_num ;
     int key[ M ] ;
+    bool data_type;
     void *pointer[ M + 1 ] ;
 
     // For leaf node
@@ -42,12 +44,15 @@ struct bpt_node
     void *father ;
 } ;
 
-extern int node_count ;
-extern int splite_count ;
+//extern int node_count ;
+//extern int splite_count ;
 extern bpt_node *root ;
-extern std::vector<std::string> relations;
-extern std::vector<bpt_node*> trees;
-extern void initial_bpt(std::string relation) ;
+//extern std::vector<std::string> relations;
+//extern std::vector<bpt_node*> trees;
+extern const bool BPT_TYPE_INT;
+extern const bool BPT_TYPE_CHAR;
+
+extern void initial_bpt(std::string relation, bool data_type) ;
 extern void insert_into_tree(entry *child);
 extern void traverse(bpt_node *nodepointer);
 extern void delete_from_tree(int key);

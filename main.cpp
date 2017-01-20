@@ -9,7 +9,7 @@ using namespace std;
 int main() {
 
 	int key[23] = {1,2,3,0,5,6,7,8,9,10,31,27,44,37,41,22,13,24,11,55,51,84,64};
-	initial_bpt("test relation");
+	initial_bpt("test relation", BPT_TYPE_INT);
 
 	for(int i=0; i<sizeof(key)/sizeof(key[0]); i++) {
 		entry *dummy= new entry;
@@ -37,7 +37,7 @@ int main() {
 		//traverse(root);
 	}
 
-	initial_bpt("test world");
+	initial_bpt("test world", BPT_TYPE_INT);
 
 	for(int i=0; i<sizeof(key)/sizeof(key[0]); i++) {
 		entry *dummy= new entry;
@@ -61,12 +61,6 @@ int main() {
 		cout<<"Key Not Found"<<endl;
 
 	scan("test world");
-
-	cout<<relations.at(1)<<endl;
-	bpt_node * bb = trees.at(0);
-	bpt_node * cc = trees.at(1);
-	cout<<"0:"<<bb -> key[0];
-	cout<<"1:"<<cc -> key[0];
 
 	return 0;
 }

@@ -18,9 +18,11 @@ int splite_count ;
 int total_leaf_page;
 int total_index_page;
 
+const bool BPT_TYPE_INT = false;
+const bool BPT_TYPE_CHAR = true;
 
 bpt_node *new_bpt_node();
-void initial_bpt(string relation);
+void initial_bpt(string relation, bool data_type);
 bpt_node *find_leaf( bpt_node* nodepointer, int key ) ;
 bpt_node *tree_search(bpt_node *nodepointer, int key);
 void insert_into_tree(entry *child);
@@ -75,17 +77,23 @@ entry *new_entry()
 }
 
 
-void initial_bpt(string relation)
+void initial_bpt(string relation, bool data_type)
 {
 
-	root = new_bpt_node();
-    root -> is_root = true ;
-    root -> is_leaf = true ;
-    node_count = 0 ;
-    splite_count = 0 ;
+	if(data_type == BPT_TYPE_INT) {
 
-    relations.insert(relations.end(), relation);
-    trees.insert(trees.end(), root);
+		root = new_bpt_node();
+    	root -> is_root = true ;
+    	root -> is_leaf = true ;
+    	root -> data_type = BPT_TYPE_INT;
+    	node_count = 0 ;
+    	splite_count = 0 ;
+
+    	relations.insert(relations.end(), relation);
+    	trees.insert(trees.end(), root);
+	} else {
+
+	}
 
     return;
 }
