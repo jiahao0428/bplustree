@@ -127,8 +127,6 @@ void insert_into_tree(entry *child)
 
 void insert(bpt_node *nodepointer, entry *child)
 {
-
-
 	if (!nodepointer -> is_leaf) {
 		for(int i=0; i<nodepointer->key_num; i++) {
 			if (child -> key >= nodepointer -> key[nodepointer->key_num-1]) {
@@ -141,6 +139,7 @@ void insert(bpt_node *nodepointer, entry *child)
 
 			if((nodepointer -> key[i] <= child -> key && child -> key < nodepointer -> key[i+1]) || child -> key < nodepointer -> key[0] || child -> key > nodepointer -> key[nodepointer->key_num-1]) {
 				// usual case, didn't split child
+				// Testing
 				if(child->key == 0) {
 					return;
 				} else {
@@ -203,10 +202,12 @@ void insert_in_node( bpt_node *node , entry *child)
     
     node -> key_num += 1 ;
 
-    if ( node -> key_num == M ) // need to split
+    if ( node -> key_num == M ) { // need to split
         split( node, child ) ;
-    else
+    }
+    else {
     	memset(child, 0, sizeof(child));
+    }
 
     return;
 }
@@ -339,7 +340,8 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			
 			if((nodepointer -> key[i] <= key && key < nodepointer -> key[i+1]) || key < nodepointer -> key[0] || key >= nodepointer -> key[nodepointer->key_num-1]) {
 
-				if(oldchildentry->key == 0) {
+				// Testing
+				if(oldchildentry->value == 0) {
 					return;
 				} else {
 	
@@ -958,5 +960,19 @@ void display_page(string relation, unsigned short int page_id) {
 
 
 void file_statistics(string relation) {
+	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
 
+	if(pos >= relations.size()) {
+    	printf("Relation Not Found\n");
+	} else {
+		//cout<<trees.at(pos) -> key[0];
+		total_index_page = 0;
+		total_leaf_page = 0;
+
+		traverse(trees.at(pos));
+		cout<<"Total Index Page: "<<total_index_page<<endl;
+
+	}
+
+	return;
 }
