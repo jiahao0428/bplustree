@@ -18,11 +18,22 @@ int splite_count ;
 int total_leaf_page;
 int total_index_page;
 
-const bool BPT_TYPE_INT = false;
-const bool BPT_TYPE_CHAR = true;
+int MAX_PAGE_SIZE;
+int CURRENT_TYPE;
+
+
+const int BPT_TYPE_INT = 1;
+const int BPT_TYPE_CHAR = 2;
+
+const int OPERATION_EQUAL = 1;
+const int OPERATION_NOT_EQUAL = 2;
+const int OPERATION_GREATER_EQUAL = 3;
+const int OPERATION_GREATER = 4;
+const int OPERATION_LESS_EQUAL = 5;
+const int OPERATION_LESS = 6;
 
 bpt_node *new_bpt_node();
-void initial_bpt(string relation, bool data_type);
+void initial_bpt(string relation, int data_type);
 bpt_node *find_leaf( bpt_node* nodepointer, int key ) ;
 bpt_node *tree_search(bpt_node *nodepointer, int key);
 void insert_into_tree(entry *child);
@@ -40,6 +51,7 @@ entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace);
 void print_leaf_ascending(bpt_node *nodepointer);
 void print_leaf_descending(bpt_node *nodepointer);
 void traverse(bpt_node *nodepointer);
+bool compare_key (void* key1, void* key2, int action);
 void scan(string relation);
 rid* query(std::string relation, int key);
 rid* query_in_node(bpt_node* nodepointer, int key);
@@ -66,33 +78,26 @@ bpt_node *new_bpt_node()
     return p ;
 }
 
-entry *new_entry() 
+
+void initial_bpt(string relation, int data_type)
 {
-	entry *child = new entry;
 
-	child -> key = 0;
-	child -> value = NULL;
+	root = new_bpt_node();
+	root -> is_root = true ;
+	root -> is_leaf = true ;
 
-	return child;
-}
-
-
-void initial_bpt(string relation, bool data_type)
-{
+	relations.insert(relations.end(), relation);
+	trees.insert(trees.end(), root);
 
 	if(data_type == BPT_TYPE_INT) {
+		MAX_PAGE_SIZE = M;
+		root -> data_type = BPT_TYPE_INT;
+		CURRENT_TYPE = BPT_TYPE_INT;
 
-		root = new_bpt_node();
-    	root -> is_root = true ;
-    	root -> is_leaf = true ;
-    	root -> data_type = BPT_TYPE_INT;
-    	node_count = 0 ;
-    	splite_count = 0 ;
-
-    	relations.insert(relations.end(), relation);
-    	trees.insert(trees.end(), root);
 	} else {
-
+		MAX_PAGE_SIZE = N;
+		root -> data_type = BPT_TYPE_CHAR;
+		CURRENT_TYPE = BPT_TYPE_CHAR;
 	}
 
     return;
@@ -151,14 +156,14 @@ void insert(bpt_node *nodepointer, entry *child)
 				if(child->key == 0) {
 					return;
 				} else {
-					if (nodepointer -> key_num  < M - 1) {
+					if (nodepointer -> key_num  < MAX_PAGE_SIZE - 1) {
 						insert_in_node((bpt_node *) nodepointer, child);
 
-						if(((bpt_node *)child -> value) -> is_leaf) {
+						if(((c_bpt_node *)child -> value) !=0 && ((bpt_node *)child -> value) -> is_leaf) {
 							int x = 0;
 							while (nodepointer -> pointer[ x ] != child -> value) x ++ ;
 
-							if (x < M)
+							if (x < MAX_PAGE_SIZE && ((c_bpt_node *)nodepointer -> pointer[ x ]) -> next != 0)
 								((bpt_node *)nodepointer -> pointer[ x ]) -> next = nodepointer -> pointer[ x + 1 ];
 
 						}
@@ -175,7 +180,7 @@ void insert(bpt_node *nodepointer, entry *child)
 		}
 	} else {
 
-		if (nodepointer -> key_num < M-1) {
+		if (nodepointer -> key_num < MAX_PAGE_SIZE-1) {
 
 			insert_in_node((bpt_node *) nodepointer, child);
 			memset(child, 0, sizeof(child));
@@ -210,7 +215,7 @@ void insert_in_node( bpt_node *node , entry *child)
     
     node -> key_num += 1 ;
 
-    if ( node -> key_num == M ) { // need to split
+    if ( node -> key_num == MAX_PAGE_SIZE ) { // need to split
         split( node, child ) ;
     }
     else {
@@ -224,22 +229,22 @@ void insert_in_node( bpt_node *node , entry *child)
 void split( bpt_node *node, entry *child)
 {
 	//traverse(root);
-    splite_count ++ ;
+
     bpt_node *nodd = new_bpt_node() ;
 
-    int mid_key = node -> key[ M / 2 ] ;
-	nodd -> key_num = M - M / 2 ; 
+    int mid_key = node -> key[ MAX_PAGE_SIZE / 2 ] ;
+	nodd -> key_num = MAX_PAGE_SIZE - MAX_PAGE_SIZE / 2 ; 
 
 	if(!node->is_leaf) {
-    	nodd -> key_num = M - M / 2 - 1; 
+    	nodd -> key_num = MAX_PAGE_SIZE - MAX_PAGE_SIZE / 2 - 1; 
 
     	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
     	{
-	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) + 1] ;
-	        nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) + 1] ;
+	        nodd -> key[ i ] = node -> key[ i + ( MAX_PAGE_SIZE / 2 ) + 1] ;
+	        nodd -> pointer[ i ] = node -> pointer[ i + ( MAX_PAGE_SIZE / 2 ) + 1] ;
 
 	        //empty it
-	        node -> key[ i + ( M / 2 ) + 1] = 0;
+	        node -> key[ i + ( MAX_PAGE_SIZE / 2 ) + 1] = 0;
 
 	        // transfer father
 	        ((bpt_node *)nodd -> pointer[ i ]) -> father = nodd;
@@ -251,24 +256,24 @@ void split( bpt_node *node, entry *child)
 
     	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
     	{
-	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) ] ;
-	        nodd -> pointer[ i + 1 ] = node -> pointer[ i + ( M / 2 ) + 1] ;
+	        nodd -> key[ i ] = node -> key[ i + ( MAX_PAGE_SIZE / 2 ) ] ;
+	        nodd -> pointer[ i + 1 ] = node -> pointer[ i + ( MAX_PAGE_SIZE / 2 ) + 1] ;
 
 
 	        //empty it
-	        node -> key[ i + ( M / 2 ) ] = 0;
+	        node -> key[ i + ( MAX_PAGE_SIZE / 2 ) ] = 0;
 			//node -> pointer[ i + ( M / 2 ) + 1] = NULL;
     	}
     }
 
-    nodd -> pointer[ nodd -> key_num ] = node -> pointer[ M ] ; // pointer when key > km
+    nodd -> pointer[ nodd -> key_num ] = node -> pointer[ MAX_PAGE_SIZE ] ; // pointer when key > km
 
     if(!node->is_leaf) {
     	((bpt_node *)nodd -> pointer[ nodd -> key_num ])->father = nodd;
     }
     
-    node -> pointer[ M ] = NULL;
-    node -> key_num = M / 2 ;
+    node -> pointer[ MAX_PAGE_SIZE ] = NULL;
+    node -> key_num = MAX_PAGE_SIZE / 2 ;
 
     if(node->is_leaf)
 	    child -> key = nodd -> key[0];
@@ -288,6 +293,12 @@ void split( bpt_node *node, entry *child)
 		root -> pointer[ 1 ] = nodd ;
 		root -> key_num = 1 ;
 		node -> father = nodd -> father = root ;
+
+		if(CURRENT_TYPE == BPT_TYPE_INT) {
+			root -> data_type = BPT_TYPE_INT;
+		} else {
+			root -> data_type = BPT_TYPE_CHAR;
+		}
 
 		root -> is_leaf = false;
 		
@@ -358,7 +369,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 					//traverse(root);
 
 
-					if(nodepointer -> key_num >= M/2) {
+					if(nodepointer -> key_num >= MAX_PAGE_SIZE/2) {
 						memset(oldchildentry, 0, sizeof(oldchildentry));
 					} else {
 						
@@ -375,9 +386,9 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 
 							for(int j=0; j<count; j++) {
 								if(parent -> pointer[j] == nodepointer && j > 0) {
-									if(((bpt_node *) parent -> pointer[j+1]) -> key_num > M/2) {
+									if(((bpt_node *) parent -> pointer[j+1]) -> key_num > MAX_PAGE_SIZE/2) {
 										s = (bpt_node *)parent -> pointer[j+1];
-									} else if(((bpt_node *)parent -> pointer[j-1]) -> key_num > M/2){
+									} else if(((bpt_node *)parent -> pointer[j-1]) -> key_num > MAX_PAGE_SIZE/2){
 										s = (bpt_node *)parent -> pointer[j-1];
 										is_left = true;
 									} else {
@@ -393,7 +404,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 									}
 									break;
 								} else if (parent -> pointer[0] == nodepointer) {
-									if(((bpt_node *)parent->pointer[1]) -> key_num > M/2) {
+									if(((bpt_node *)parent->pointer[1]) -> key_num > MAX_PAGE_SIZE/2) {
 										s = (bpt_node *)parent -> pointer[1];
 									} else {
 										need_to_merge = true;
@@ -402,7 +413,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 
 									break;
 								} else if(parent -> pointer[count] == nodepointer) {
-									if(((bpt_node *)parent -> pointer[count - 1]) -> key_num > M/2) {
+									if(((bpt_node *)parent -> pointer[count - 1]) -> key_num > MAX_PAGE_SIZE/2) {
 										s = (bpt_node *)parent -> pointer[count - 1];
 										is_left = true;
 									} else {
@@ -460,7 +471,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 							if(nodepointer->key_num <= 1) {
 								//printf("here?\n");
 								//cout<<nodepointer->key_num;
-								if(((bpt_node *)nodepointer->pointer[0]) -> key_num + ((bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < M) {
+								if(((bpt_node *)nodepointer->pointer[0]) -> key_num + ((bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < MAX_PAGE_SIZE) {
 									//merge with root
 									// Problem with lost rid content
 									if(((bpt_node *)nodepointer -> pointer[0]) -> key_num > 0) {
@@ -475,6 +486,12 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 									root -> previous = NULL;
 									root -> is_root = true;
 									root -> father = NULL;
+
+									if(CURRENT_TYPE == BPT_TYPE_INT) {
+										root -> data_type = BPT_TYPE_INT;
+									} else {
+										root -> data_type = BPT_TYPE_CHAR;
+									}
 
 								}
 							}
@@ -497,7 +514,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			return;
 		}
 
-		if (nodepointer -> key_num >= M/2) {
+		if (nodepointer -> key_num >= MAX_PAGE_SIZE/2) {
 			//cout<<"nothing happen?";
 			memset(oldchildentry, 0, sizeof(oldchildentry));
 			return;
@@ -522,11 +539,11 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			//print_leaf_descending(root);
 
 
-			if(nodepointer -> next != 0 && ((bpt_node*) nodepointer -> next) -> key_num > M/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
+			if(nodepointer -> next != 0 && ((bpt_node*) nodepointer -> next) -> key_num > MAX_PAGE_SIZE/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
 				s = (bpt_node*) nodepointer -> next;
 				//cout<<"here";
-			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous) -> key_num > M/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
-				if(((bpt_node*) nodepointer -> previous) -> key_num > M/2) {
+			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous) -> key_num > MAX_PAGE_SIZE/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
+				if(((bpt_node*) nodepointer -> previous) -> key_num > MAX_PAGE_SIZE/2) {
 					s = (bpt_node*) nodepointer -> previous;
 					is_left = true;
 					//cout<<"there";
@@ -633,7 +650,7 @@ void delete_in_node( bpt_node *node , int key , entry *oldchildentry)
 void redistribute(bpt_node *L, bpt_node *S) 
 {
 	//l key num is d - 1
-	for(int i=0; i<M; i++) {
+	for(int i=0; i<MAX_PAGE_SIZE; i++) {
 		if(L->is_leaf) {
 			
 			// Moving from right
@@ -701,7 +718,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 				--S -> key_num;
 				++L -> key_num;
 
-				if(L -> key_num >= M/2) {
+				if(L -> key_num >= MAX_PAGE_SIZE/2) {
 					break;
 				}
 			} else {
@@ -709,10 +726,10 @@ void redistribute(bpt_node *L, bpt_node *S)
 				dummy = find_parent_entry((bpt_node*)S->father, S);
 
 
-				cout<< ((bpt_node*)L->father)->key[0];
-				cout<<L->key[0];
+				//cout<< ((bpt_node*)L->father)->key[0];
+				//cout<<L->key[0];
 				for(int j=0;j<((bpt_node*)L->father)->key_num; j++) {
-					if(((bpt_node*)L->father) -> key[j] = dummy -> key) {
+					if(((bpt_node*)L->father) -> key[j] == dummy -> key) {
 						((bpt_node*)L->father) -> key[j] = L -> key[L -> key_num -1 - i];
 						break;
 					}
@@ -741,7 +758,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 				++S -> key_num;
 				--L -> key_num;
 
-				if(S -> key_num >= M/2) {
+				if(S -> key_num >= MAX_PAGE_SIZE/2) {
 					break;
 				}
 
@@ -754,7 +771,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 
 void merge(bpt_node *L, bpt_node *S) 
 {
-	for(int i=0; i<M; i++) {
+	for(int i=0; i<MAX_PAGE_SIZE; i++) {
 		if(!L-> is_leaf) {
 			L -> key[L -> key_num] = S -> key[i];
 			L -> pointer[L -> key_num] = S -> pointer[i];
@@ -815,12 +832,49 @@ entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace)
 
 	for(int i=0; i<nodepointer->key_num; i++) {
 		if (nodepointer -> pointer[i + 1] == pointer_to_replace) {
-			entry* M = new entry; 
-			M -> key = nodepointer -> key[i];
-			M -> value = nodepointer -> pointer[i + 1];
+			entry* dummy = new entry; 
+			dummy -> key = nodepointer -> key[i];
+			dummy -> value = nodepointer -> pointer[i + 1];
 
-			return M;
+			return dummy;
 		}
+	}
+}
+
+bool compare_key (void* key1, void* key2, int action) {
+
+	if(CURRENT_TYPE == BPT_TYPE_INT) {
+
+		if(action == OPERATION_EQUAL) {
+			return (int *) key1 == (int *) key2;
+		} else if(action == OPERATION_NOT_EQUAL) {
+			return (int *) key1 != (int *) key2;
+		} else if(action == OPERATION_GREATER_EQUAL) {
+			return (int *) key1 >= (int *) key2;
+		} else if(action == OPERATION_GREATER) {
+			return (int *) key1 > (int *) key2;
+		} else if(action == OPERATION_LESS_EQUAL) {
+			return (int *) key1 <= (int *) key2;
+		} else {
+			return (int *) key1 < (int *) key2;
+		}
+
+	} else {
+
+		if(action == OPERATION_EQUAL) {
+			return (char *) key1 == (char *) key2;
+		} else if(action == OPERATION_NOT_EQUAL) {
+			return (char *) key1 != (char *) key2;
+		} else if(action == OPERATION_GREATER_EQUAL) {
+			return (char *) key1 >= (char *) key2;
+		} else if(action == OPERATION_GREATER) {
+			return (char *) key1 > (char *) key2;
+		} else if(action == OPERATION_LESS_EQUAL) {
+			return (char *) key1 <= (char *) key2;
+		} else {
+			return (char *) key1 < (char *) key2;
+		}
+		
 	}
 }
 

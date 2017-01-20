@@ -24,8 +24,29 @@ int main() {
 		insert_into_tree(dummy);
 	}
 
+	traverse(root);
 
-	int key_to_delete[11] = {3,9, 5,10, 27, 13, 2, 7,44,22,6};
+	string s_key[9] = {"hahawidkfj", "jnhgtvbgff","jjjuhgrfff","oookjhygtf","ikjnbgtfvc","ujhqqazxsw","prfvbjughf","uhyedscvfo","uhyedscvfs"};
+
+	initial_c_bpt("test relation");
+
+	for(int i=0; i<sizeof(s_key)/sizeof(s_key[0]); i++) {
+		c_entry *dummy= new c_entry;
+		rid *test = new rid;
+
+		test -> page_id = 90;
+		test -> slot_id = 80;
+
+		strcpy(dummy -> key, s_key[i]);
+		dummy -> info = test;
+
+		c_insert_into_tree(dummy);
+	}
+	cout<<"start \n";
+	c_traverse(c_root);
+	//c_print_leaf_ascending(c_root);
+
+	/*int key_to_delete[11] = {3,9, 5,10, 27, 13, 2, 7,44,22,6};
 
 	for(int i=0; i<sizeof(key_to_delete)/sizeof(key_to_delete[0]); i++) {
 		cout<<"====== delete key: "<<key_to_delete[i] << " ======"<<endl;
@@ -60,7 +81,10 @@ int main() {
 	else
 		cout<<"Key Not Found"<<endl;
 
-	scan("test world");
+	scan("test world");*/
+
+	//root->pointer[0] = ((bpt_node*)root->pointer[0]);
+	//cout<<root->data_type;
 
 	return 0;
 }
