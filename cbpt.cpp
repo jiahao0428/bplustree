@@ -814,8 +814,9 @@ void c_traverse(c_bpt_node *nodepointer, bool print)
 	for(int i=0; i<nodepointer -> key_num; i++) {
 		if(i == 0 && nodepointer->is_leaf) {
 			c_total_leaf_page++;
-			if(print)
+			if(print) {
 				printf("leaf: ");
+			}
 		}
 		
 		if(print) {
@@ -940,13 +941,19 @@ vector<rid*> c_range_query_in_node(c_bpt_node* nodepointer, char* key1, char* ke
 	vector<rid*> list;
 
 	while(true) {
-		if(strcmp(leaf->key[i], key1) >= 0 && strcmp(leaf->key[i], key2) <= 0) {
-			list.insert(list.end(), (rid*)leaf->pointer[i+1]);
-		} else if(strcmp(leaf->key[i], key2) > 0) {
-			break;
-		} else if (i == leaf->key_num - 1 && strcmp(leaf->key[i], key2) < 0  && leaf->next != 0) {
-			leaf = (c_bpt_node *)leaf->next;
-			i = -1;
+
+		if(i <= key_num - 1) {
+
+			if(strcmp(leaf->key[i], key1) >= 0 && strcmp(leaf->key[i], key2) <= 0) {
+				list.insert(list.end(), (rid*)leaf->pointer[i+1]);
+			} else if(strcmp(leaf->key[i], key2) > 0) {
+				break;
+			} 
+
+			if (i == leaf->key_num - 1 && strcmp(leaf->key[i], key2) < 0  && leaf->next != 0) {
+				leaf = (c_bpt_node *)leaf->next;
+				i = -1;
+			}
 		}
 
 		i++;
