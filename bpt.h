@@ -58,7 +58,7 @@ struct c_bpt_node
     bool is_root ;
     int key_num ;
     char key[ N ] [11];
-    void *pointer[ M + 1 ] ;
+    void *pointer[ N + 1 ] ;
 
     // For leaf node
     void *previous ;

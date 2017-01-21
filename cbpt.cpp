@@ -94,9 +94,9 @@ c_bpt_node *c_tree_search(c_bpt_node *nodepointer, char* key)
 			if ( strcmp(key, nodepointer -> key[nodepointer -> key_num - 1]) >= 0) {
 				return c_tree_search((c_bpt_node *)nodepointer -> pointer[nodepointer -> key_num], key);
 			} else {
-				for(int i=0; i<nodepointer -> key_num; i++) {
+				for(int i=0; i<nodepointer -> key_num - 1; i++) {
 					if (strcmp(nodepointer -> key[i], key) <= 0 && strcmp(key, nodepointer -> key[i+1]) < 0) {
-						return c_tree_search((c_bpt_node *)nodepointer->pointer[i], key);
+						return c_tree_search((c_bpt_node *)nodepointer->pointer[i+1], key);
 					}
 				}
 			}
