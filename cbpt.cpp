@@ -942,7 +942,7 @@ vector<rid*> c_range_query_in_node(c_bpt_node* nodepointer, char* key1, char* ke
 
 	while(true) {
 
-		if(i <= key_num - 1) {
+		if(i <= leaf->key_num - 1) {
 
 			if(strcmp(leaf->key[i], key1) >= 0 && strcmp(leaf->key[i], key2) <= 0) {
 				list.insert(list.end(), (rid*)leaf->pointer[i+1]);
