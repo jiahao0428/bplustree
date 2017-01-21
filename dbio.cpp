@@ -8,7 +8,7 @@
 #define REL_NAME_LEN 256
 #define RECORD_MAX_LEN 512
 
-#define DBIO_LOG_OUTPUT
+//#define DBIO_LOG_OUTPUT
 
 class PageInteger {
 
@@ -1131,7 +1131,7 @@ int main (int argc, char* argv[]) {
 
 	if (argc == 1) {
 
-		InputFile = fopen("ProjectB_data.txt","r");
+		InputFile = fopen("test_data.txt","r");
 		OutputFile = fopen("log.txt","w");
 
 	} else if (argc == 3) {
@@ -1160,7 +1160,7 @@ int main (int argc, char* argv[]) {
 
 	while(fgets(Buffer,sizeof(Buffer),InputFile) != NULL)
 	{
-//fprintf(stderr,"what happen; Buffer = %s",Buffer); //DEBUG
+
 		// kill 0d in 0d 0a in windows environment
 		{
 			char *ch = strchr(Buffer,'\n');
@@ -1288,9 +1288,5 @@ int main (int argc, char* argv[]) {
 	fclose(InputFile);
 	fclose(OutputFile);
 
-fprintf(stderr,"\n\n\n");
-//traverse(RelInt.GetName());
-fprintf(stderr,"\n\n\n");
-//traverse(RelStr.GetName());
 	return 0;
 }

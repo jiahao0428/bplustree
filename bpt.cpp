@@ -1003,21 +1003,18 @@ vector<rid*> i_range_query(string relation, int key1, int key2) {
 vector<rid*> i_range_query_in_node(bpt_node* nodepointer, int key1, int key2) {
 
 	bpt_node* leaf = find_leaf(nodepointer, key1);
-	int i = 0;
+
 
 	vector<rid*> list;
 
-	while(true) {
+	for (int i = 0; leaf->key[i] <= key2 && i < leaf->key_num; i++) {
 		if(leaf->key[i] >= key1 && leaf->key[i] <= key2) {
 			list.insert(list.end(), (rid*)leaf->pointer[i+1]);
-		} else if(leaf->key[i] > key2) {
-			break;
-		} else if (i == leaf->key_num-1 && leaf->key[i] < key2  && leaf->next != 0) {
-			leaf = (bpt_node *)leaf->next;
-			i = -1;
 		}
-
-		i++;
+		if (i == leaf->key_num-1 && leaf->next != 0) {
+			leaf = (bpt_node *)leaf->next;
+			i = 0;
+		}
 	}
 
 	return  list;

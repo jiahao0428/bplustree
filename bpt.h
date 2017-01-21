@@ -14,7 +14,7 @@ const int M = 64;
 const int N = 37;
 
 
-struct rid
+struct rid 
 {
 	unsigned short int page_id ;
 	unsigned short int slot_id ;
@@ -102,7 +102,7 @@ extern std::vector<rid*> i_range_query(std::string relation, int key1, int key2)
 extern void i_traverse(bpt_node *nodepointer, bool print);
 extern void i_print_leaf_ascending(bpt_node *nodepointer);
 extern void i_print_leaf_descending(bpt_node *nodepointer);
-extern void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
+extern void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id); 
 extern void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
 
 // Character
@@ -116,7 +116,7 @@ extern std::vector<rid*> c_range_query(std::string relation, char* key1, char* k
 extern void c_traverse(c_bpt_node *nodepointer, bool print);
 extern void c_print_leaf_ascending(c_bpt_node *nodepointer);
 extern void c_print_leaf_descending(c_bpt_node *nodepointer);
-void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
+extern void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
 extern void c_calculate_slotted_page(c_bpt_node* nodepointer, int* slotted_data_page);
 
 
