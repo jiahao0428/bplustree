@@ -135,7 +135,7 @@ void c_insert(c_bpt_node *nodepointer, c_entry *child)
 				c_insert((c_bpt_node *)nodepointer -> pointer[i + 1], child);
 			}
 
-			if((strcmp(nodepointer -> key[i], child -> key) <= 0 && strcmp(child -> key, nodepointer -> key[i+1])) < 0 || strcmp(child -> key, nodepointer -> key[0]) < 0 || strcmp(child -> key, nodepointer -> key[nodepointer->key_num-1]) > 0) {
+			if((strcmp(nodepointer -> key[i], child -> key) <= 0 && strcmp(child -> key, nodepointer -> key[i+1]) < 0) || strcmp(child -> key, nodepointer -> key[0]) < 0 || strcmp(child -> key, nodepointer -> key[nodepointer->key_num-1]) > 0) {
 				// usual case, didn't split child
 				// Testing
 				if(strcmp(child->key, "") == 0) {
