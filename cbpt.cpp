@@ -936,11 +936,11 @@ vector<rid*> c_range_query(string relation, char* key1, char* key2) {
 vector<rid*> c_range_query_in_node(c_bpt_node* nodepointer, char* key1, char* key2) {
 	
 	c_bpt_node* leaf = c_find_leaf(nodepointer, key1);
-	int i = 0;
+	//int i = 0;
 
 	vector<rid*> list;
 
-	while(true) {
+	/*while(true) {
 
 		if(i <= leaf->key_num - 1) {
 
@@ -957,6 +957,16 @@ vector<rid*> c_range_query_in_node(c_bpt_node* nodepointer, char* key1, char* ke
 		}
 
 		i++;
+	}*/
+
+	for (int i = 0; strcmp(leaf->key[i], key2) <=0 && i < leaf->key_num; i++) {
+		if(strcmp(leaf->key[i], key1) >=0 && strcmp(leaf->key[i], key2) <= 0 ) {
+			list.insert(list.end(), (rid*)leaf->pointer[i+1]);
+		}
+		if (i == leaf->key_num-1 && leaf->next != 0) {
+			leaf = (c_bpt_node *)leaf->next;
+			i = 0;
+		}
 	}
 
 	return  list; 
