@@ -8,7 +8,7 @@
 #define REL_NAME_LEN 256
 #define RECORD_MAX_LEN 512
 
-//#define DBIO_LOG_OUTPUT
+#define DBIO_LOG_OUTPUT
 
 class PageInteger {
 
@@ -494,6 +494,7 @@ class RelationString {
 		char Record[RECORD_MAX_LEN];
 
 		char* Pointer = Temp->GetRecord(ParamRID.slot_id, Key);
+
 		strncpy(Record,Pointer,this->GetRecordLength()-10);
 
 		fprintf(OutputFile,"Retrieved Record (\"%s\",\"%s\")\n",Key,Record);
@@ -530,6 +531,13 @@ int parseInt(char*& str)
 		str++;
 	}
 	return val;
+}
+
+int MatchRelation(char* RelationName, RelationInteger& RelInt, RelationString RelStr) {
+
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) return 1; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) return 2; // Matched RelStr
+	else return -4; // relname mismatch
 }
 
 int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& RelStr, FILE* OutputFile)
@@ -604,7 +612,7 @@ int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 		RelInt.SetInitialized();
 
 		/* set the tree*/
-		initial_bpt(RelationName);
+		initial_i_bpt(RelationName);
 		/*             */
 	} else {
 #ifdef DBIO_LOG_OUTPUT
@@ -615,7 +623,7 @@ int ParseInstructionR(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 		RelStr.SetInitialized();
 
 		/* set the tree */
-		//initial_bpt(RelationName); // not done yet
+		initial_c_bpt(RelationName);
 		/*              */
 	}
 	return output_code;
@@ -658,8 +666,8 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 
 	// match the relation-name read to either of our relations,
 	bool InsertToInt;
-	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) InsertToInt = true; // Insert to RelInt
-	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) InsertToInt = false; // Insert to RelStr
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) InsertToInt = true; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) InsertToInt = false; // Matched RelStr
 	else return -4; // relname mismatch
 
 	for(i = 0; i < 7; i++) {
@@ -715,18 +723,20 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 				Record[RelInt.GetRecordLength()-4] = '\0';
 			}
 			rid RIDHolder = RelInt.InsertRecord(IntegerKey,Record);
-#ifdef DBIO_LOG_OUTPUT
-			fprintf(OutputFile,"Inserting record (%d,\"%s\") into \"%s\"\n", IntegerKey, Record, RelationName);
-#endif
+
 			/* Insert into tree */
-			entry *Entry= new entry;
+			entry *Entry= new entry ();
 			rid *PointerRID = new rid (RIDHolder);
 
 			Entry -> key = IntegerKey;
 			Entry -> info = PointerRID;
 
-			insert_into_tree(Entry);
+			i_insert_into_tree(RelationName,Entry);
 			/*                  */
+#ifdef DBIO_LOG_OUTPUT
+			fprintf(OutputFile,"Inserting record (%d,\"%s\") into \"%s\"\n", IntegerKey, Record, RelationName);
+#endif
+
 		}
 		else {
 			// RelStr
@@ -738,6 +748,16 @@ int ParseInstructionI (char* Buffer, RelationInteger& RelInt, RelationString& Re
 				Record[RelStr.GetRecordLength()-10] = '\0';
 			}
 			rid RIDHolder = RelStr.InsertRecord(StringKey,Record);
+
+			/* Insert into tree */
+			c_entry *Entry= new c_entry ();
+			rid *PointerRID = new rid (RIDHolder);
+
+			strcpy(Entry -> key, StringKey);
+			Entry -> info = PointerRID;
+
+			c_insert_into_tree(RelationName,Entry);
+			/*                  */
 #ifdef DBIO_LOG_OUTPUT
 			fprintf(OutputFile,"Inserting record (\"%s\",\"%s\") into \"%s\"\n", StringKey, Record, RelationName);
 #endif
@@ -789,8 +809,8 @@ int ParseInstructionD(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 
 	// match the relation-name read to either of our relations,
 	bool IsIntRelation;
-	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
-	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Matched RelStr
 	else return -4; // relname mismatch
 
 	// Read Key
@@ -812,25 +832,39 @@ int ParseInstructionD(char* Buffer, RelationInteger& RelInt, RelationString& Rel
 
 	// Do BPT query + BPT deletion + page slot deletion
 	if(IsIntRelation) {
-		/* Tree query + Deletion */
-		rid* PointerRID = query(RelationName, IntegerKey);
-
-		delete_from_tree(IntegerKey);
-		/*                       */
+		/* Tree query */
+		rid* PointerRID = i_query(RelationName, IntegerKey);
+		/*            */
 		if (PointerRID == NULL) {
 #ifdef DBIO_LOG_OUTPUT
 			fprintf(OutputFile,"Attempted to delete record with key %d, but it was not found.\n", IntegerKey);
 #endif
 			return 1; // key not found
 		}
+		/* Tree delete entry */
+		i_delete_from_tree(RelationName,IntegerKey);
+		/*                   */
 #ifdef DBIO_LOG_OUTPUT
-		fprintf(OutputFile,"Deleting record with key %d\n", IntegerKey);
+		fprintf(OutputFile,"Deleting record with key %d.\n", IntegerKey);
 #endif
 		RelInt.DeleteRecord(*PointerRID,OutputFile);
 	} else {
+		/* Tree query */ fflush(OutputFile);
+		rid* PointerRID = c_query(RelationName, StringKey);
+		/*            */
+		if (PointerRID == NULL) {
 #ifdef DBIO_LOG_OUTPUT
-		fprintf(OutputFile,"Need to delete record with key \"%s\", but this is not implemented yet.\n", StringKey);
+			fprintf(OutputFile,"Attempted to delete record with key \"%s\", but it was not found.\n", StringKey);
 #endif
+			return 1; // key not found
+		}
+		/* Tree delete entry */
+		c_delete_from_tree(RelationName,StringKey);
+		/*                   */
+#ifdef DBIO_LOG_OUTPUT
+		fprintf(OutputFile,"Deleting record with key \"%s\".\n", StringKey);
+#endif
+		RelStr.DeleteRecord(*PointerRID,OutputFile);
 	}
 	return 1;
 }
@@ -858,21 +892,17 @@ int ParseInstructionScan(char* Buffer, RelationInteger& RelInt, RelationString& 
 	if (*Current != '\n') return -7; // trailing
 
 	// match the relation-name read to either of our relations,
-	bool IsIntRelation;
-	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
-	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) ; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) ; // Matched RelStr
 	else return -4; // relname mismatch
 
-	/* Output BPT node/leaf count */
-	if (IsIntRelation) {
-		fprintf(OutputFile, "Telling tree info of \"%s\": # of leaf pages, # of total index pages. Refer to Console.\n", RelationName);
-		/* Get tree info */
-		scan(RelationName);
-		/*               */
-	} else {
-		fprintf(OutputFile, "Telling tree info of \"%s\": # of leaf pages, # of total index pages. ", RelationName);
-		fprintf(OutputFile, "This is not implemented yet.\n");
-	}
+	// Output index node/leaf count
+	/* Get tree info */
+	int NumberOfLeafPages = 0;
+	int NumberOfNonleafIndexPages = 0;
+	scan(RelationName, &NumberOfLeafPages, &NumberOfNonleafIndexPages);
+	/*               */
+	fprintf(OutputFile, "Index information of relation \"%s\": %d leaf pages, %d total index pages.\n", RelationName,NumberOfLeafPages,NumberOfLeafPages+NumberOfNonleafIndexPages);
 
 	return 1;
 }
@@ -903,8 +933,8 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 
 	// match the relation-name read to either of our relations,
 	bool IsIntRelation;
-	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
-	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Matched RelStr
 	else return -4; // relname mismatch
 
 	// Read Key1
@@ -924,15 +954,24 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 	if (*Current == '\n') {
 		if(IsIntRelation) {
 			/* RID = tree query */
-			rid* PointerRID = query(RelationName,IntegerKey1);
+			rid* PointerRID = i_query(RelationName,IntegerKey1);
 			/*                  */
-
-			RelInt.GetRecord(*PointerRID,OutputFile);
+			if (PointerRID == NULL) {
+				fprintf(OutputFile,"Error: Attempted to retrieve record with key %d, but it was not found.\n",IntegerKey1);
+			} else {
+				RelInt.GetRecord(*PointerRID,OutputFile);
+			}
 			return 1;
 		} else {
-			fprintf(OutputFile,"Equality query, key = \"%s\". This is not implemented yet.\n", StringKey1);
-			/* RID = bpt-function */
-			return 2;
+			/* RID = tree query */
+			rid* PointerRID = c_query(RelationName,StringKey1);
+			/*                  */
+			if (PointerRID == NULL) {
+				fprintf(OutputFile,"Error: Attempted to retrieve record with key \"%s\", but it was not found.\n",StringKey1);
+			} else {
+				RelStr.GetRecord(*PointerRID,OutputFile);
+			}
+			return 1;
 		}
 	}
 
@@ -941,26 +980,54 @@ int ParseInstructionLQ(char* Buffer, RelationInteger& RelInt, RelationString& Re
 		IntegerKey2 = parseInt(Current);
 		if (IntegerKey2 == -1) return -8; // bad integer2
 	} else {
-		if (*Current != '\"') return -6; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 		strncpy(StringKey2,Current,10);
 		while(*Current != '\n' && *Current != '\"' ) Current++;
-		if (*Current != '\"') return -6; // illegal input
+		if (*Current != '\"') return -6; // bad dquote
 		++Current;
 	}
 	SkipWhiteSpaces(Current);
 
 	if (*Current == '\n') {
 		if(IsIntRelation) {
-			fprintf(OutputFile,"Range query, key in [%d,%d]. This is not implemented yet.\n", IntegerKey1, IntegerKey2);
-			// RIDs = bpt-functions ?
-			// RelInt.GetRecord(RIDs)
+
+			/* tree ranged query */
+			vector<rid*> PointersRID = i_range_query(RelationName, IntegerKey1, IntegerKey2);
+			/*                   */
+
+			size_t n = PointersRID.size();
+			if (n == 0) {
+				fprintf(OutputFile,"No records with key in [%d,%d] were found.\n", IntegerKey1, IntegerKey2);
+			} else {
+				for (size_t i = 0; i < n; i++) {
+					RelInt.GetRecord(*PointersRID.at(i),OutputFile);
+				}
+			}
+
+			fprintf(OutputFile, "> Retrieved %d record", n);
+			if (n != 1) fprintf(OutputFile,"s");
+			fprintf(OutputFile,".\n");
+
 			return 3;
 		} else {
 
-			fprintf(OutputFile,"Range query, key in [\"%s\",\"%s\"]. This is not implemented yet.\n", StringKey1, StringKey2);
-			// RIDs = bpt-functions ?
-			// RelInt.GetRecord(RIDs)
+
+			/* tree ranged query */
+			vector<rid*> PointersRID = c_range_query(RelationName, StringKey1, StringKey2);
+			/*                   */
+
+			size_t n = PointersRID.size();
+			if (n == 0) {
+				fprintf(OutputFile,"No records with key in [\"%s\",\"%s\"] were found.\n", StringKey1, StringKey2);
+			} else {
+				for (size_t i = 0; i < n; i++)
+					RelStr.GetRecord(*PointersRID.at(i),OutputFile);
+			}
+			fprintf(OutputFile, "> Retrieved %d record", n);
+			if (n != 1) fprintf(OutputFile,"s");
+			fprintf(OutputFile,".\n");
+
 			return 4;
 		}
 
@@ -996,8 +1063,8 @@ int ParseInstructionLP(char* Buffer, RelationInteger& RelInt, RelationString& Re
 
 	// match the relation-name read to either of our relations,
 	bool IsIntRelation;
-	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
-	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Matched RelStr
 	else return -4; // RelName did not match
 
 	if (*Current == '\n') {
@@ -1033,22 +1100,25 @@ int ParseInstructionLC(char* Buffer, RelationInteger& RelInt, RelationString& Re
 
 	// match the relation-name read to either of our relations,
 	bool IsIntRelation;
-	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Insert to RelInt
-	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Insert to RelStr
+	if (RelInt.IsInitialized() && strcmp(RelationName,RelInt.GetName()) == 0) IsIntRelation = true; // Matched RelInt
+	else if (RelStr.IsInitialized() && strcmp(RelationName,RelStr.GetName()) == 0) IsIntRelation = false; // Matched RelStr
 	else return -4; // RelName did not match
 
 	fprintf(OutputFile,"Displaying statistics of relation \"%s\":\n",RelationName);
 
 	if (IsIntRelation) {
 		fprintf(OutputFile,"  %d slotted pages.\n",RelInt.GetNumberOfPages());
-		fprintf(OutputFile,"  ___ index pages. Refer to console.\n");
-		/* Tree total index page */
-		scan(RelationName);
-		/*  */
 	} else {
 		fprintf(OutputFile,"  %d slotted pages.\n",RelStr.GetNumberOfPages());
-		fprintf(OutputFile,"  ___ index pages. Not implemented yet.\n");
 	}
+
+	/* Get tree info */
+	int NumberOfLeafPages = 0;
+	int NumberOfNonleafIndexPages = 0;
+	scan(RelationName, &NumberOfLeafPages, &NumberOfNonleafIndexPages);
+	/*               */
+
+	fprintf(OutputFile,"  %d index pages.\n",NumberOfLeafPages+NumberOfNonleafIndexPages);
 
 	if (*Current == '\n') return 1;
 	return -7;
@@ -1060,11 +1130,11 @@ int main (int argc, char* argv[]) {
 	FILE* OutputFile;
 
 	if (argc == 1) {
+
 		InputFile = fopen("ProjectB_data.txt","r");
-//		InputFile = stdin;
 		OutputFile = fopen("log.txt","w");
-//		OutputFile = stdout;
-	} else if (argc >= 3) {
+
+	} else if (argc == 3) {
 
 		InputFile = fopen(argv[1],"r");
 
@@ -1074,6 +1144,8 @@ int main (int argc, char* argv[]) {
 		else {
 			OutputFile = fopen(argv[2],"w");
 		}
+	} else {
+		fprintf(stderr,"Wrong number of arguments, expecting none (default filenames) or two (custom filenames).\n");
 	}
 
 	if (InputFile == NULL || OutputFile == NULL) {
@@ -1088,6 +1160,15 @@ int main (int argc, char* argv[]) {
 
 	while(fgets(Buffer,sizeof(Buffer),InputFile) != NULL)
 	{
+//fprintf(stderr,"what happen; Buffer = %s",Buffer); //DEBUG
+		// kill 0d in 0d 0a in windows environment
+		{
+			char *ch = strchr(Buffer,'\n');
+			if (ch != Buffer && ch != NULL && *(ch-1) == 0x0d) {
+				*(ch-1) = '\n';
+				*ch = '\0';
+			}
+		}
 		switch (Buffer[0]) {
 			case 'R':
 				switch(ParseInstructionR(Buffer,RelInt,RelStr,OutputFile)){
@@ -1207,6 +1288,9 @@ int main (int argc, char* argv[]) {
 	fclose(InputFile);
 	fclose(OutputFile);
 
-
+fprintf(stderr,"\n\n\n");
+//traverse(RelInt.GetName());
+fprintf(stderr,"\n\n\n");
+//traverse(RelStr.GetName());
 	return 0;
 }
