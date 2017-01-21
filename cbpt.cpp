@@ -877,8 +877,6 @@ rid* c_query_in_node(c_bpt_node* nodepointer, char* key) {
 	c_bpt_node* leaf = c_find_leaf(nodepointer, key);
 	int i = 0;
 
-	cout<<leaf->key[0];
-
 	while(true) {
 		if(strcmp(leaf->key[i], key) == 0) {
 			return ((rid*)leaf->pointer[i+1]);
