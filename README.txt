@@ -14,7 +14,7 @@ Another way to use it is to run it like so:
 $ ./bpt ProjectB_data.txt log.txt
 
 The first argument is the input file, while the second is the output file.
-You can supply your own filenames for it.
+You can supply your own filenames for it, but if the input file does not exist, the program will probably write "Error opening files." to stderr.
 There is one last way to execute it, which is also an exception to the previous way:
 
 $ ./bpt ProjectB_data.txt stdout
