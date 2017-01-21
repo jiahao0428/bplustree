@@ -1131,7 +1131,7 @@ int main (int argc, char* argv[]) {
 
 	if (argc == 1) {
 
-		InputFile = fopen("test_data.txt","r");
+		InputFile = fopen("ProjectB_data.txt","r");
 		OutputFile = fopen("log.txt","w");
 
 	} else if (argc == 3) {
