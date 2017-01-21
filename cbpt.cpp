@@ -13,8 +13,9 @@ vector<string> c_relations;
 vector<c_bpt_node*> c_trees;
 
 c_bpt_node *c_root ;
-int c_total_leaf_page;
-int c_total_index_page;
+
+int c_total_leaf_page = 0;
+int c_total_index_page = 0;
 
 
 c_bpt_node *new_c_bpt_node();
@@ -38,6 +39,7 @@ void c_print_leaf_descending(c_bpt_node *nodepointer);
 void c_traverse(c_bpt_node *nodepointer);
 rid* c_query(std::string relation, char* key);
 rid* c_query_in_node(c_bpt_node* nodepointer, char* key);
+void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
 void c_calculate_slotted_page(c_bpt_node* nodepointer, int* slotted_data_page);
 
 
@@ -228,7 +230,6 @@ void c_split( c_bpt_node *node, c_entry *child)
 
 	        //empty it
 	        strcpy(node -> key[ i + ( N / 2 ) + 1], "");
-	        //cout<<"clear:"<<node -> key[ i + ( N / 2 ) + 1];
 
 	        // transfer father
 	        ((c_bpt_node *)nodd -> pointer[ i ]) -> father = nodd;
@@ -274,11 +275,9 @@ void c_split( c_bpt_node *node, c_entry *child)
 		c_trees.back() = c_root;
 		c_root -> is_root = true ;
 
-		//cout<<"root"<<mid_key;
 		// Modify mid key to child key
 		strcpy(c_root -> key[ 0 ], child ->key );
 
-		//cout<<"root"<<c_root->key[0];
 		c_root -> pointer[ 0 ] = node ;
 		c_root -> pointer[ 1 ] = nodd ;
 		c_root -> key_num = 1 ;
@@ -308,8 +307,6 @@ void c_split( c_bpt_node *node, c_entry *child)
     	}
 	}
 
-	//traverse(root);
-	//cout<<root->key_num;
     return;
 }
 
@@ -345,11 +342,6 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 				delete_c_entry((c_bpt_node *)nodepointer -> pointer[i + 1], key, oldchildc_entry);
 			}
 
-			/*cout<<"out"<<nodepointer -> key[i];
-			cout<<"in"<<key;
-			cout<<"num:"<<nodepointer -> key_num;
-			cout<<"oldchild:"<<oldchildc_entry->key;*/
-	
 			
 			if((strcmp(nodepointer -> key[i], key) <= 0 && strcmp(key, nodepointer -> key[i+1])) < 0 || strcmp(key, nodepointer -> key[0]) < 0 || strcmp(key, nodepointer -> key[nodepointer->key_num-1]) >= 0) {
 
@@ -359,16 +351,12 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 				} else {
 	
 					c_delete_in_node((c_bpt_node *) nodepointer, key, oldchildc_entry);
-					//cout<<"he";
-					//traverse(root);
-
 
 					if(nodepointer -> key_num >= N/2) {
 						memset(oldchildc_entry, 0, sizeof(oldchildc_entry));
 					} else {
 						
 						c_bpt_node * s = new c_bpt_node;
-						//cout<<nodepointer->key_num;
 
 						if(!nodepointer -> is_root) {
 
@@ -423,13 +411,13 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 							c_entry *m = new c_entry;
 
 							if(!need_to_merge) {
-								//cout<<"re";
+
 								if(!is_left) {
-									//printf("right\n");
+
 									c_redistribute((c_bpt_node *) nodepointer, s);
 								}
 								else {
-									//printf("left\n");
+
 									printf("%s\n", nodepointer->key[0]);
 									c_redistribute(s, (c_bpt_node *) nodepointer);
 
@@ -437,7 +425,6 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 								}
 								memset(oldchildc_entry, 0, sizeof(oldchildc_entry));
 							} else {
-								//cout<<"mer";
 
 								c_bpt_node* pointer_to_replace = new c_bpt_node;
 								pointer_to_replace = s;
@@ -451,8 +438,7 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 									c_merge((c_bpt_node *) nodepointer, s);
 								}
 								else {
-									//cout<<"left";
-									//traverse(root);
+
 									c_entry* m = find_parent_c_entry((c_bpt_node *)nodepointer -> father, nodepointer);
 									strcpy(oldchildc_entry -> key, m -> key);
 									oldchildc_entry -> value = m -> value;
@@ -463,11 +449,12 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 						} else {
 							// Not sure...
 							if(nodepointer->key_num <= 1) {
-								//printf("here?\n");
-								//cout<<nodepointer->key_num;
+
 								if(((c_bpt_node *)nodepointer->pointer[0]) -> key_num + ((c_bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < N) {
-									//merge with root
+									
+									// merge with root
 									// Problem with lost rid content
+
 									if(((c_bpt_node *)nodepointer -> pointer[0]) -> key_num > 0) {
 										c_root = (c_bpt_node *)nodepointer -> pointer[0];
 										c_trees.back() = c_root;
@@ -491,55 +478,39 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 			}
 		}
 	} else {
-		//cout<<"leaf";
-		//cout<<((c_bpt_node *) nodepointer) -> key_num;
 
-		//cout<<((c_bpt_node *) nodepointer) -> key[0];
 		c_delete_in_node((c_bpt_node *) nodepointer, key, oldchildc_entry);
-		//cout<<((c_bpt_node*) nodepointer -> previous)->key[0];
 
 		if(nodepointer->is_root && nodepointer->is_leaf) {
 			return;
 		}
 
 		if (nodepointer -> key_num >= N/2) {
-			//cout<<"nothing happen?";
 			memset(oldchildc_entry, 0, sizeof(oldchildc_entry));
 			return;
 		} else {
 
-			//cout<<((c_bpt_node *) nodepointer) -> key_num;
 			c_bpt_node *s = new c_bpt_node; 
 			c_entry* n = new c_entry;
-			//cout<< (c_bpt_node*) nodepointer -> next;
-			//cout<< "previous"<<(c_bpt_node*) nodepointer -> previous;
-
 
 			n = find_parent_c_entry((c_bpt_node *) nodepointer -> father, nodepointer);
 
 			bool need_to_merge = false;
 			bool is_left = false;
 
-			//cout<< "count:" <<((c_bpt_node*) nodepointer -> previous)->key_num;
-			//cout<< ((c_bpt_node*) nodepointer -> previous) -> key[1];
-			//cout<< nodepointer->key[0];
-			//cout<<"check";
-			//print_leaf_descending(root);
-
-
 			if(nodepointer -> next != 0 && ((c_bpt_node*) nodepointer -> next) -> key_num > N/2 && ((c_bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
+				
 				s = (c_bpt_node*) nodepointer -> next;
-				//cout<<"here";
+
 			} else if(nodepointer -> previous != 0 && ((c_bpt_node*) nodepointer -> previous) -> key_num > N/2 && ((c_bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
 				if(((c_bpt_node*) nodepointer -> previous) -> key_num > N/2) {
 					s = (c_bpt_node*) nodepointer -> previous;
 					is_left = true;
-					//cout<<"there";
 				}
 			} else {
 
 				need_to_merge = true;
-				//cout<<((c_bpt_node*) nodepointer -> previous);
+
 				if(nodepointer -> previous == 0 || ((c_bpt_node *)nodepointer->father) -> pointer[0] == nodepointer || ((c_bpt_node*) nodepointer -> previous) -> father != nodepointer -> father) {
 					s = (c_bpt_node*) nodepointer -> next;
 				} else {
@@ -550,29 +521,21 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 			}
 			
 			if(!need_to_merge) { 
-				//cout<<"redistribute";
+
 
 				if(!is_left) {
+
 					c_redistribute((c_bpt_node *) nodepointer, s);
-					//cout<<s -> key[0];
-					//cout<<"here";
-					// father problem
-					//cout<<((c_bpt_node *)s->father)->key[0];
+
 					replace_parent_c_entry((c_bpt_node *) s -> father, s -> key[0], s);
 				} else {
 					c_redistribute(s,(c_bpt_node *) nodepointer);
-					//cout<<nodepointer->key[0];
+
 					replace_parent_c_entry((c_bpt_node *) nodepointer -> father, nodepointer -> key[0], nodepointer);
 				}
-				// place most left key of s into parent
-				//print_leaf_ascending(root);
-				
-				//cout<<"fuck";
-				//cout<<((c_bpt_node *) s -> father) -> key[0];
 
 				memset(oldchildc_entry, 0, sizeof(oldchildc_entry));
 			} else {
-				//cout<<"merge";
 
 				c_entry* m = new c_entry;
 
@@ -580,15 +543,12 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 					c_merge(nodepointer, s);
 					m = find_parent_c_entry((c_bpt_node *) nodepointer -> father, s);
 				} else {
-					//cout<<"left";
 					//problem
 					c_merge(s, nodepointer);
 					m = find_parent_c_entry((c_bpt_node *) nodepointer -> father, nodepointer);
 				}
 
-				//cout<<"after merge:"<<s->key[s -> key_num - 1];
 				strcpy(oldchildc_entry -> key, m -> key);
-				//cout<<"old:"<<oldchildc_entry -> key;
 				oldchildc_entry -> value = m -> value;
 			}
 
@@ -715,9 +675,6 @@ void c_redistribute(c_bpt_node *L, c_bpt_node *S)
 				c_entry* dummy = new c_entry;
 				dummy = find_parent_c_entry((c_bpt_node*)S->father, S);
 
-
-				//cout<< ((c_bpt_node*)L->father)->key[0];
-				//cout<<L->key[0];
 				for(int j=0;j<((c_bpt_node*)L->father)->key_num; j++) {
 					if(strcmp(((c_bpt_node*)L->father) -> key[j], dummy -> key) == 0) {
 						strcpy(((c_bpt_node*)L->father) -> key[j], L -> key[L -> key_num -1 - i]);
@@ -770,7 +727,6 @@ void c_merge(c_bpt_node *L, c_bpt_node *S)
 			L -> pointer[L -> key_num + 1] = S -> pointer[i + 1];
 		}
 
-		//cout<<((c_bpt_node *)L -> pointer[L -> key_num]);
 
 		if(((c_bpt_node *)L -> pointer[L -> key_num]) != 0 && !L->is_leaf)
 			((c_bpt_node *)L -> pointer[L -> key_num]) -> father = L;
@@ -873,7 +829,6 @@ void c_print_leaf_ascending(c_bpt_node *nodepointer)
 			for (int i = 0; i < nodepointer->key_num; i++)
 			{
 				printf("key: %s ,", nodepointer->key[i]);
-				//cout<< ((rid*)nodepointer->pointer[i+1]);
 				printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
 				printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
 			}
@@ -909,7 +864,6 @@ rid* c_query(string relation, char* key) {
     	printf("*********Relation Not Found**********\n");
     	return NULL;
 	} else {
-		//cout<<trees.at(pos) -> key[0];
 		return c_query_in_node(c_trees.at(pos), key);
 	}
 }
@@ -934,6 +888,30 @@ rid* c_query_in_node(c_bpt_node* nodepointer, char* key) {
 	}
 
 	return  NULL; 
+}
+
+void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id) {
+
+	if(!nodepointer->is_leaf) {
+
+		c_find_slotted_page((c_bpt_node *)nodepointer->pointer[0], slot_ids, page_id);
+
+	} else {
+
+		while(nodepointer != 0) {
+			for (int i = 0; i < nodepointer->key_num; i++)
+			{
+
+				(*slot_ids).insert((*slot_ids).end(), ((rid*)nodepointer->pointer[i+1]) -> slot_id);
+
+			}
+
+			nodepointer = (c_bpt_node *)nodepointer->next;
+		}
+	}
+
+
+	return;
 }
 
 

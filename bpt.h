@@ -6,11 +6,12 @@
 #include <vector>
 
 using namespace std;
+
 // Integer, M: 512 bytes page ==> 63 +1 for overflow
 // Character,N: 37 ==> 36 +1 for overflow
-// const int M = 64 ;
-const int M = 8;
-const int N = 9;
+
+const int M = 64;
+const int N = 37;
 
 
 struct rid 
@@ -76,10 +77,15 @@ extern std::vector<bpt_node*> trees;
 extern std::vector<std::string> c_relations;
 extern std::vector<c_bpt_node*> c_trees;
 
+extern int total_leaf_page;
+extern int total_index_page;
+extern int c_total_leaf_page;
+extern int c_total_index_page;
+
 // Unified interface
 
 extern void scan(std::string relation, int* leaf_page, int * index_page);
-extern void display_page(std::string relation, unsigned short int page_id);
+extern vector<unsigned short int> display_page(string relation, unsigned short int page_id);
 extern void file_statistics(std::string relation, int* index_page, int* slotted_data_page);
 extern void print_leaf_ascending(string relation);
 extern void print_leaf_descending(string relation);
@@ -96,6 +102,7 @@ extern std::vector<rid*> range_query(std::string relation, int key1, int key2);
 extern void i_traverse(bpt_node *nodepointer);
 extern void i_print_leaf_ascending(bpt_node *nodepointer);
 extern void i_print_leaf_descending(bpt_node *nodepointer);
+extern void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id); 
 extern void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
 
 // Character
@@ -108,6 +115,7 @@ extern rid* c_query(std::string relation, char* key);
 extern void c_traverse(c_bpt_node *nodepointer);
 extern void c_print_leaf_ascending(c_bpt_node *nodepointer);
 extern void c_print_leaf_descending(c_bpt_node *nodepointer);
+void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
 extern void c_calculate_slotted_page(c_bpt_node* nodepointer, int* slotted_data_page);
 
 

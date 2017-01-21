@@ -8,6 +8,9 @@ using namespace std;
 
 int main() {
 
+	
+	// Insert Integer & Traverse Example
+
 	int key[23] = {1,2,3,0,5,6,7,8,9,10,31,27,44,37,41,22,13,24,11,55,51,84,64};
 	initial_i_bpt("test relation1");
 
@@ -25,6 +28,12 @@ int main() {
 	}
 
 	traverse("test relation1");
+
+
+
+
+	// Insert Char & Traverse Example
+
 
 	char s_key[9][11] = {"hahawidkfj", "jnhgtvbgff","jjjuhgrfff","oookjhygtf","ikjnbgtfvc","ujhqqazxsw","prfvbjughf","uhyedscvfo","uhyedscvfs"};
 
@@ -46,12 +55,20 @@ int main() {
 
 	traverse("test relation");
 
+
+
+
+	// Delete Char & Traverse Example
+
 	char test[11] = "hahawidkfj";
 	c_delete_from_tree("test relation", test);
 
 	traverse("test relation");
 
-	//c_print_leaf_descending(c_root);
+
+
+
+	// Delete Integer & Traverse & Print Leaf Ascending Example
 
 	int key_to_delete[11] = {3,9, 5,10, 27, 13, 2, 7,44,22,6};
 
@@ -60,10 +77,14 @@ int main() {
 
 		i_delete_from_tree("test relation1", key_to_delete[i]);
 
-		cout<<"leaf: "<<endl;
+		cout<<"Leaf: "<<endl;
 		print_leaf_ascending("test relation1");
-		//traverse(root);
 	}
+
+
+
+
+	// Insert Integer Example
 
 	initial_i_bpt("test world");
 
@@ -80,33 +101,50 @@ int main() {
 		i_insert_into_tree("test world", dummy);
 	}
 
+
+
+	// ===================Query Example===========================
+
 	traverse("test world");
 	rid* test_query = i_query("test world", 44);
-
-	vector<rid*> haha = range_query("test world", 1, 10);
-	cout<<"range query sample: "<<haha.at(0)->slot_id;
 
 	if(test_query != 0)
 		cout<<"slot id: "<<test_query->slot_id<<endl;
 	else
 		cout<<"Key Not Found"<<endl;
 
+
+	// Range Query Example
+
+	vector<rid*> haha = range_query("test world", 1, 10);
+	cout<<"Range query sample: "<<haha.at(0)->slot_id<<endl;
+
+
+	// ===================Scan Example============================
+
 	int lpage = 0;
 	int ipage = 0;
 	scan("test world", &lpage, &ipage);
 
-	cout<< "total leaf page: "<<lpage<<endl;
-	cout<< "total index page: "<<ipage<<endl;
+	cout<< "Total leaf page: "<<lpage<<endl;
+	cout<< "Total index page: "<<ipage<<endl;
+
+
+	// ==============File Statistics Example======================
 
 	lpage = 0;
 	int slotted_data_page = 0;
 	file_statistics( "test relation1", &lpage, &slotted_data_page);
 
-	cout<< "total index page in test relation1: "<<lpage<<endl;
-	cout<< "total slotted page in test relation1: "<<slotted_data_page<<endl;
+	cout<< "Total index page in test relation1: "<<lpage<<endl;
+	cout<< "Total slotted page in test relation1: "<<slotted_data_page<<endl;
 
-	//root->pointer[0] = ((bpt_node*)root->pointer[0]);
-	//cout<<root->data_type;
+
+	// ===============Display Page Example========================
+
+	vector<unsigned short int> slot_ids = display_page("test relation", 90);
+	cout<<"Second slot id: "<<slot_ids.at(1);
+
 
 	return 0;
 }

@@ -13,10 +13,9 @@ vector<string> relations;
 vector<bpt_node*> trees;
 
 bpt_node *root ;
-int node_count ;
-int splite_count ;
-int total_leaf_page;
-int total_index_page;
+
+int total_leaf_page = 0;
+int total_index_page = 0;
 
 
 bpt_node *new_bpt_node();
@@ -46,15 +45,15 @@ rid* i_query(std::string relation, int key);
 rid* query_in_node(bpt_node* nodepointer, int key);
 vector<rid*> range_query(std::string relation, int key1, int key2);
 vector<rid*> range_query_in_node(bpt_node* nodepointer, int key1, int key2);
-void display_page(std::string relation, unsigned short int page_id);
+vector<unsigned short int> display_page(string relation, unsigned short int page_id);
 void i_file_statistics(string relation, int* index_page, int* slotted_data_page);
 void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
+void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
 
 
 
 bpt_node *new_bpt_node()
 {
-	node_count ++ ;
 
 	bpt_node *p = new bpt_node ;
 
@@ -311,8 +310,6 @@ void split( bpt_node *node, entry *child)
     	}
 	}
 
-	//traverse(root);
-	//cout<<root->key_num;
     return;
 }
 
@@ -349,12 +346,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 				delete_entry((bpt_node *)nodepointer -> pointer[i + 1], key, oldchildentry);
 			}
 
-			/*cout<<"out"<<nodepointer -> key[i];
-			cout<<"in"<<key;
-			cout<<"num:"<<nodepointer -> key_num;
-			cout<<"oldchild:"<<oldchildentry->key;*/
 	
-			
 			if((nodepointer -> key[i] <= key && key < nodepointer -> key[i+1]) || key < nodepointer -> key[0] || key >= nodepointer -> key[nodepointer->key_num-1]) {
 
 				// Testing
@@ -363,16 +355,12 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 				} else {
 	
 					delete_in_node((bpt_node *) nodepointer, key, oldchildentry);
-					//cout<<"he";
-					//traverse(root);
-
 
 					if(nodepointer -> key_num >= M/2) {
 						memset(oldchildentry, 0, sizeof(oldchildentry));
 					} else {
 						
 						bpt_node * s = new bpt_node;
-						//cout<<nodepointer->key_num;
 
 						if(!nodepointer -> is_root) {
 
@@ -427,13 +415,11 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 							entry *m = new entry;
 
 							if(!need_to_merge) {
-								//cout<<"re";
+
 								if(!is_left) {
-									//printf("right\n");
 									redistribute((bpt_node *) nodepointer, s);
 								}
 								else {
-									//printf("left\n");
 									printf("%d\n", nodepointer->key[0]);
 									redistribute(s, (bpt_node *) nodepointer);
 
@@ -441,7 +427,6 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 								}
 								memset(oldchildentry, 0, sizeof(oldchildentry));
 							} else {
-								//cout<<"mer";
 
 								bpt_node* pointer_to_replace = new bpt_node;
 								pointer_to_replace = s;
@@ -455,8 +440,6 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 									merge((bpt_node *) nodepointer, s);
 								}
 								else {
-									//cout<<"left";
-									//traverse(root);
 									entry* m = find_parent_entry((bpt_node *)nodepointer -> father, nodepointer);
 									oldchildentry -> key = m -> key;
 									oldchildentry -> value = m -> value;
@@ -467,8 +450,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 						} else {
 							// Not sure...
 							if(nodepointer->key_num <= 1) {
-								//printf("here?\n");
-								//cout<<nodepointer->key_num;
+
 								if(((bpt_node *)nodepointer->pointer[0]) -> key_num + ((bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < M) {
 									//merge with root
 									// Problem with lost rid content
@@ -495,55 +477,37 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			}
 		}
 	} else {
-		//cout<<"leaf";
-		//cout<<((bpt_node *) nodepointer) -> key_num;
 
-		//cout<<((bpt_node *) nodepointer) -> key[0];
 		delete_in_node((bpt_node *) nodepointer, key, oldchildentry);
-		//cout<<((bpt_node*) nodepointer -> previous)->key[0];
 
 		if(nodepointer->is_root && nodepointer->is_leaf) {
 			return;
 		}
 
 		if (nodepointer -> key_num >= M/2) {
-			//cout<<"nothing happen?";
 			memset(oldchildentry, 0, sizeof(oldchildentry));
 			return;
 		} else {
 
-			//cout<<((bpt_node *) nodepointer) -> key_num;
 			bpt_node *s = new bpt_node; 
 			entry* n = new entry;
-			//cout<< (bpt_node*) nodepointer -> next;
-			//cout<< "previous"<<(bpt_node*) nodepointer -> previous;
-
 
 			n = find_parent_entry((bpt_node *) nodepointer -> father, nodepointer);
 
 			bool need_to_merge = false;
 			bool is_left = false;
 
-			//cout<< "count:" <<((bpt_node*) nodepointer -> previous)->key_num;
-			//cout<< ((bpt_node*) nodepointer -> previous) -> key[1];
-			//cout<< nodepointer->key[0];
-			//cout<<"check";
-			//print_leaf_descending(root);
-
-
 			if(nodepointer -> next != 0 && ((bpt_node*) nodepointer -> next) -> key_num > M/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
 				s = (bpt_node*) nodepointer -> next;
-				//cout<<"here";
 			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous) -> key_num > M/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
 				if(((bpt_node*) nodepointer -> previous) -> key_num > M/2) {
 					s = (bpt_node*) nodepointer -> previous;
 					is_left = true;
-					//cout<<"there";
 				}
 			} else {
 
 				need_to_merge = true;
-				//cout<<((bpt_node*) nodepointer -> previous);
+
 				if(nodepointer -> previous == 0 || ((bpt_node *)nodepointer->father) -> pointer[0] == nodepointer || ((bpt_node*) nodepointer -> previous) -> father != nodepointer -> father) {
 					s = (bpt_node*) nodepointer -> next;
 				} else {
@@ -554,29 +518,17 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			}
 			
 			if(!need_to_merge) { 
-				//cout<<"redistribute";
 
 				if(!is_left) {
 					redistribute((bpt_node *) nodepointer, s);
-					//cout<<s -> key[0];
-					//cout<<"here";
-					// father problem
-					//cout<<((bpt_node *)s->father)->key[0];
 					replace_parent_entry((bpt_node *) s -> father, s -> key[0], s);
 				} else {
 					redistribute(s,(bpt_node *) nodepointer);
-					//cout<<nodepointer->key[0];
 					replace_parent_entry((bpt_node *) nodepointer -> father, nodepointer -> key[0], nodepointer);
 				}
-				// place most left key of s into parent
-				//print_leaf_ascending(root);
-				
-				//cout<<"fuck";
-				//cout<<((bpt_node *) s -> father) -> key[0];
 
 				memset(oldchildentry, 0, sizeof(oldchildentry));
 			} else {
-				//cout<<"merge";
 
 				entry* m = new entry;
 
@@ -584,15 +536,12 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 					merge(nodepointer, s);
 					m = find_parent_entry((bpt_node *) nodepointer -> father, s);
 				} else {
-					//cout<<"left";
 					//problem
 					merge(s, nodepointer);
 					m = find_parent_entry((bpt_node *) nodepointer -> father, nodepointer);
 				}
 
-				//cout<<"after merge:"<<s->key[s -> key_num - 1];
 				oldchildentry -> key = m -> key;
-				//cout<<"old:"<<oldchildentry -> key;
 				oldchildentry -> value = m -> value;
 			}
 
@@ -717,9 +666,6 @@ void redistribute(bpt_node *L, bpt_node *S)
 				entry* dummy = new entry;
 				dummy = find_parent_entry((bpt_node*)S->father, S);
 
-
-				//cout<< ((bpt_node*)L->father)->key[0];
-				//cout<<L->key[0];
 				for(int j=0;j<((bpt_node*)L->father)->key_num; j++) {
 					if(((bpt_node*)L->father) -> key[j] == dummy -> key) {
 						((bpt_node*)L->father) -> key[j] = L -> key[L -> key_num -1 - i];
@@ -771,8 +717,6 @@ void merge(bpt_node *L, bpt_node *S)
 			L -> key[L -> key_num] = S -> key[i];
 			L -> pointer[L -> key_num + 1] = S -> pointer[i + 1];
 		}
-
-		//cout<<((bpt_node *)L -> pointer[L -> key_num]);
 
 		if(((bpt_node *)L -> pointer[L -> key_num]) != 0 && !L->is_leaf)
 			((bpt_node *)L -> pointer[L -> key_num]) -> father = L;
@@ -917,7 +861,6 @@ void i_print_leaf_ascending(bpt_node *nodepointer)
 			for (int i = 0; i < nodepointer->key_num; i++)
 			{
 				printf("key: %d ,", nodepointer->key[i]);
-				//cout<< ((rid*)nodepointer->pointer[i+1]);
 				printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
 				printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
 			}
@@ -972,6 +915,9 @@ void scan(string relation, int* leaf_page, int * index_page) {
 	total_index_page = 0;
 	total_leaf_page = 0;
 
+	c_total_leaf_page = 0;
+	c_total_leaf_page = 0;
+
 	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
 	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
@@ -980,20 +926,8 @@ void scan(string relation, int* leaf_page, int * index_page) {
 		printf("*********Relation Not Found**********\n");
 
 	} else if(pos2 >= c_relations.size()) {
-		//cout<<trees.at(pos) -> key[0];
 
 		i_traverse(trees.at(pos1));
-
-		//char test[11] = "asdasdasdd";
-
-		//i, A11_c
-		/*cout << typeid(pos).name() << endl;
-
-		if(typeid(test).name() == TYPE_CHAR) {
-			cout<<"true";
-		} else {
-			cout<<"false";
-		}*/
 
 		*leaf_page = total_leaf_page;
 		*index_page = total_index_page;
@@ -1001,8 +935,8 @@ void scan(string relation, int* leaf_page, int * index_page) {
 	} else if(pos1 >= relations.size()) {
 		c_traverse(c_trees.at(pos2));
 
-		*leaf_page = total_leaf_page;
-		*index_page = total_index_page;
+		*leaf_page = c_total_leaf_page;
+		*index_page = c_total_index_page;
 	}
 
 	return;
@@ -1015,7 +949,6 @@ rid* i_query(string relation, int key) {
     	printf("*********Relation Not Found**********\n");
     	return NULL;
 	} else {
-		//cout<<trees.at(pos) -> key[0];
 		return query_in_node(trees.at(pos), key);
 	}
 }
@@ -1051,7 +984,6 @@ vector<rid*> range_query(string relation, int key1, int key2) {
     	printf("*********Relation Not Found**********\n");
     	return list;
 	} else {
-		//cout<<trees.at(pos) -> key[0];
 		return range_query_in_node(trees.at(pos), key1, key2);
 	}
 }
@@ -1081,12 +1013,55 @@ vector<rid*> range_query_in_node(bpt_node* nodepointer, int key1, int key2) {
 }
 
 
-void display_page(string relation, unsigned short int page_id) {
+vector<unsigned short int> display_page(string relation, unsigned short int page_id) {
+	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
+	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
+	vector<unsigned short int> slot_ids;
+
+	if(pos1 >= relations.size() && pos2 >= c_relations.size()) {
+		
+		printf("*********Relation Not Found**********\n");
+
+	} else if(pos2 >= c_relations.size()) {
+
+		i_find_slotted_page(trees.at(pos1), &slot_ids, page_id);
+
+	} else if(pos1 >= relations.size()) {
+
+		c_find_slotted_page(c_trees.at(pos2), &slot_ids, page_id);
+	}
+
+	return slot_ids;
 }
 
 
+void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id) {
+
+	if(!nodepointer->is_leaf) {
+
+		i_find_slotted_page((bpt_node *)nodepointer->pointer[0], slot_ids, page_id);
+
+	} else {
+
+		while(nodepointer != 0) {
+			for (int i = 0; i < nodepointer->key_num; i++)
+			{
+
+				(*slot_ids).insert((*slot_ids).end(), ((rid*)nodepointer->pointer[i+1]) -> slot_id);
+
+			}
+
+			nodepointer = (bpt_node *)nodepointer->next;
+		}
+	}
+
+
+	return;
+}
+
 void file_statistics(string relation, int* index_page, int* slotted_data_page) {
+
 	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
 	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
@@ -1116,6 +1091,7 @@ void file_statistics(string relation, int* index_page, int* slotted_data_page) {
 }
 
 void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page) {
+
 	if(!nodepointer->is_leaf) {
 		i_calculate_slotted_page((bpt_node *)nodepointer->pointer[0], slotted_data_page);
 	} else {
