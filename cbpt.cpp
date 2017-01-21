@@ -36,7 +36,7 @@ void c_replace_key(c_bpt_node *nodepointer, char* key, char* key_to_replace);
 c_entry* find_parent_c_entry(c_bpt_node *nodepointer, c_bpt_node *pointer_to_replace);
 void c_print_leaf_ascending(c_bpt_node *nodepointer);
 void c_print_leaf_descending(c_bpt_node *nodepointer);
-void c_traverse(c_bpt_node *nodepointer);
+void c_traverse(c_bpt_node *nodepointer, bool print);
 rid* c_query(std::string relation, char* key);
 rid* c_query_in_node(c_bpt_node* nodepointer, char* key);
 vector<rid*> c_range_query(string relation, char* key1, char* key2);
@@ -792,23 +792,27 @@ c_entry* find_parent_c_entry(c_bpt_node *nodepointer, c_bpt_node *pointer_to_rep
 }
 
 
-void c_traverse(c_bpt_node *nodepointer) 
+void c_traverse(c_bpt_node *nodepointer, bool print) 
 {
 
 	for(int i=0; i<nodepointer -> key_num; i++) {
 		if(i == 0 && nodepointer->is_leaf) {
 			c_total_leaf_page++;
-			printf("leaf: ");
+			if(print)
+				printf("leaf: ");
 		}
-
-		printf("%s ", nodepointer->key[i]);
+		
+		if(print)
+			printf("%s ", nodepointer->key[i]);
 	}
 
 	if (!nodepointer -> is_root) {
-		printf("\nfather 1st key: %s\n", ((c_bpt_node *)nodepointer->father)->key[0]);
+		if(print)
+			printf("\nfather 1st key: %s\n", ((c_bpt_node *)nodepointer->father)->key[0]);
 	}
 	else {
-		printf("\n");
+		if(print)
+			printf("\n");
 	}
 
 	if(!nodepointer -> is_leaf) {
@@ -816,7 +820,7 @@ void c_traverse(c_bpt_node *nodepointer)
 		c_total_index_page ++;
 
 		for(int i=0; i<=nodepointer -> key_num; i++) {
-			c_traverse((c_bpt_node *)nodepointer -> pointer[i]);
+			c_traverse((c_bpt_node *)nodepointer -> pointer[i], true);
 			continue;
 		}
 	}

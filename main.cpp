@@ -80,8 +80,8 @@ int main() {
 	// Query Char
 
 	traverse("test relation");
-	char test2[11] = "nkpgrtgady";
-	//char test2[11] = "skbeefznqb";
+	//char test2[11] = "nkpgrtgady";
+	char test2[11] = "skbeefznqb";
 
 	rid* test_query2 = c_query("test relation", test2);
 

@@ -99,7 +99,7 @@ extern void i_delete_from_tree(std::string relation, int key);
 extern rid* i_query(std::string relation, int key);
 extern std::vector<rid*> i_range_query(std::string relation, int key1, int key2);
 
-extern void i_traverse(bpt_node *nodepointer);
+extern void i_traverse(bpt_node *nodepointer, bool print);
 extern void i_print_leaf_ascending(bpt_node *nodepointer);
 extern void i_print_leaf_descending(bpt_node *nodepointer);
 extern void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id); 
@@ -113,7 +113,7 @@ extern void c_delete_from_tree(std::string relation, char* key);
 extern rid* c_query(std::string relation, char* key);
 extern std::vector<rid*> c_range_query(std::string relation, char* key1, char* key2);
 
-extern void c_traverse(c_bpt_node *nodepointer);
+extern void c_traverse(c_bpt_node *nodepointer, bool print);
 extern void c_print_leaf_ascending(c_bpt_node *nodepointer);
 extern void c_print_leaf_descending(c_bpt_node *nodepointer);
 void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);

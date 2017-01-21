@@ -39,7 +39,7 @@ void i_print_leaf_ascending(bpt_node *nodepointer);
 void print_leaf_descending(string relation);
 void i_print_leaf_descending(bpt_node *nodepointer);
 void traverse(string relation);
-void i_traverse(bpt_node *nodepointer);
+void i_traverse(bpt_node *nodepointer, bool print);
 void scan(string relation, int* leaf_page, int * index_page);
 rid* i_query(std::string relation, int key);
 rid* query_in_node(bpt_node* nodepointer, int key);
@@ -789,34 +789,43 @@ void traverse(string relation) {
 
 	} else if(pos2 >= c_relations.size()) {
 
-		i_traverse(trees.at(pos1));
+		i_traverse(trees.at(pos1), true);
 
 	} else if(pos1 >= relations.size()) {
 
-		c_traverse(c_trees.at(pos2));
+		c_traverse(c_trees.at(pos2), true);
 
 	}
 
 	return;
 }
 
-void i_traverse(bpt_node *nodepointer) 
+void i_traverse(bpt_node *nodepointer, bool print) 
 {
 
 	for(int i=0; i<nodepointer -> key_num; i++) {
 		if(i == 0 && nodepointer->is_leaf) {
 			total_leaf_page++;
-			printf("leaf: ");
+			
+			if(print) {
+				printf("leaf: ");
+			}
 		}
 
-		printf("%d ", nodepointer->key[i]);
+		if(print) {
+			printf("%d ", nodepointer->key[i]);
+		}
 	}
 
 	if (!nodepointer -> is_root) {
-		printf("\nfather 1st key: %d\n", ((bpt_node *)nodepointer->father)->key[0]);
+		if(print) {
+			printf("\nfather 1st key: %d\n", ((bpt_node *)nodepointer->father)->key[0]);
+		}
 	}
 	else {
-		printf("\n");
+		if(print) {
+			printf("\n");
+		}
 	}
 
 	if(!nodepointer -> is_leaf) {
@@ -824,7 +833,7 @@ void i_traverse(bpt_node *nodepointer)
 		total_index_page ++;
 
 		for(int i=0; i<=nodepointer -> key_num; i++) {
-			i_traverse((bpt_node *)nodepointer -> pointer[i]);
+			i_traverse((bpt_node *)nodepointer -> pointer[i], print);
 			continue;
 		}
 	}
@@ -929,13 +938,13 @@ void scan(string relation, int* leaf_page, int * index_page) {
 
 	} else if(pos2 >= c_relations.size()) {
 
-		i_traverse(trees.at(pos1));
+		i_traverse(trees.at(pos1), false);
 
 		*leaf_page = total_leaf_page;
 		*index_page = total_index_page;
 
 	} else if(pos1 >= relations.size()) {
-		c_traverse(c_trees.at(pos2));
+		c_traverse(c_trees.at(pos2), false);
 
 		*leaf_page = c_total_leaf_page;
 		*index_page = c_total_index_page;
@@ -1075,7 +1084,7 @@ void file_statistics(string relation, int* index_page, int* slotted_data_page) {
 
 		total_index_page = 0;
 
-		i_traverse(trees.at(pos1));
+		i_traverse(trees.at(pos1), false);
 		*index_page = total_index_page;
 
 		i_calculate_slotted_page(trees.at(pos1), slotted_data_page);
@@ -1083,7 +1092,7 @@ void file_statistics(string relation, int* index_page, int* slotted_data_page) {
 	} else if(pos1 >= relations.size()) {
 		total_index_page = 0;
 
-		c_traverse(c_trees.at(pos2));
+		c_traverse(c_trees.at(pos2), false);
 		*index_page = total_index_page;
 
 		c_calculate_slotted_page(c_trees.at(pos2), slotted_data_page);
