@@ -91,11 +91,11 @@ c_bpt_node *c_tree_search(c_bpt_node *nodepointer, char* key)
 		if ( strcmp(key, nodepointer -> key[0]) < 0) {
 			return c_tree_search((c_bpt_node *)nodepointer -> pointer[0], key);
 		} else {
-			if ( key >= nodepointer -> key[nodepointer -> key_num - 1]) {
+			if ( strcmp(key, nodepointer -> key[nodepointer -> key_num - 1]) >= 0) {
 				return c_tree_search((c_bpt_node *)nodepointer -> pointer[nodepointer -> key_num], key);
 			} else {
 				for(int i=0; i<nodepointer -> key_num; i++) {
-					if (nodepointer -> key[i] <= key && key < nodepointer -> key[i+1]) {
+					if (strcmp(nodepointer -> key[i], key) <= 0 && strcmp(key, nodepointer -> key[i+1]) < 0) {
 						return c_tree_search((c_bpt_node *)nodepointer->pointer[i], key);
 					}
 				}
@@ -127,9 +127,9 @@ void c_insert(c_bpt_node *nodepointer, c_entry *child)
 
 	if (!nodepointer -> is_leaf) {
 		for(int i=0; i<nodepointer->key_num; i++) {
-			if (strcmp(child -> key, nodepointer -> key[nodepointer->key_num-1])>=0) {
+			if (strcmp(child -> key, nodepointer -> key[nodepointer->key_num-1]) >= 0) {
 				c_insert((c_bpt_node *)nodepointer -> pointer[nodepointer->key_num], child);
-			} else if(strcmp(child -> key, nodepointer -> key[0])) {
+			} else if(strcmp(child -> key, nodepointer -> key[0]) < 0) {
 				c_insert((c_bpt_node *)nodepointer -> pointer[0], child);
 			} else if (strcmp(nodepointer -> key[i], child -> key) <= 0 && strcmp(child -> key, nodepointer -> key[i+1]) < 0) {
 				c_insert((c_bpt_node *)nodepointer -> pointer[i + 1], child);
@@ -184,7 +184,7 @@ void c_insert_in_node( c_bpt_node *node , c_entry *child)
 
 	int x = 0 ;
 
-    while ( x < node -> key_num && node -> key[ x ] < child -> key ) x ++ ;
+    while ( x < node -> key_num && strcmp(node -> key[ x ], child -> key) < 0 ) x ++ ;
     for ( int i = node -> key_num ; i > x ; i -- )
         strcpy(node -> key[ i ], node -> key[ i - 1 ] );
     for ( int i = node -> key_num + 1 ; i > x + 1 ; i -- )
@@ -876,6 +876,8 @@ rid* c_query_in_node(c_bpt_node* nodepointer, char* key) {
 	
 	c_bpt_node* leaf = c_find_leaf(nodepointer, key);
 	int i = 0;
+
+	cout<<leaf->key[0];
 
 	while(true) {
 		if(strcmp(leaf->key[i], key) == 0) {

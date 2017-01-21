@@ -9,6 +9,29 @@ using namespace std;
 int main() {
 
 	
+	//======================Test Case==============================
+
+	/*initial_i_bpt("test case");
+
+	int key_test_case[5] = {6, 8, 22, 44, 12}; 
+
+	for(int i=0; i<sizeof(key_test_case)/sizeof(key_test_case[0]); i++) {
+		entry *dummy= new entry;
+		rid *test = new rid;
+
+		test -> page_id = 90;
+		test -> slot_id = 80;
+
+		dummy -> key = key_test_case[i];
+		dummy -> info = test;
+
+		i_insert_into_tree("test case", dummy);
+	}
+
+	traverse("test case");	
+	cout<<"========================"<<endl;
+*/
+
 	// Insert Integer & Traverse Example
 
 	int key[23] = {1,2,3,0,5,6,7,8,9,10,31,27,44,37,41,22,13,24,11,55,51,84,64};
@@ -35,7 +58,7 @@ int main() {
 	// Insert Char & Traverse Example
 
 
-	char s_key[9][11] = {"hahawidkfj", "jnhgtvbgff","jjjuhgrfff","oookjhygtf","ikjnbgtfvc","ujhqqazxsw","prfvbjughf","uhyedscvfo","uhyedscvfs"};
+	char s_key[232][11] = {"nkpgrtgady","ksxzilnqvg","fbajhdwzzv","sbscccjpui","dhvldaieus","cpbfdoghex","mevfcsfiag","xqhszzgpvj","nzhbabylud","hjcnmrzgoe","siizfigbbv","yffslmivgz","vcrbstsfpk","lkcatxmnpz","bmaefwhrvb","owjafbcada","fmdbgdmmmc","lzhfibxamf","ciieqikwpz","yzxdphbfir","hwzzaenxeo","ldhaxrgdim","ehqcehrxty","uihrclgnfx","iwnrpuumyn","evdzcxttfg","lchawutuut","qlbjyhwowr","zryqcyswvn","quydvmjzqs","jugwpenono","jjrfmlzvul","mewkjcuyqn","kdfmhmesff","zoivsavzej","bdwzayrlra","hmoyvgzjos","aktwgdabma","muljdaliwj","ragxmhptkt","ymesqeacfk","nqmcewbjti","jlrdnibhav","xtgesrjqhd","emtohcmpec","drypsaqwax","znxeknvqzj","ncoaiofoql","eilrwoiblu","pncvbjfpng","yugrnurenb","bvofheaccz","mcdmxwhvgt","bnjzyjyyjc","urymsfjbgq","ruibiizgrm","chahxhbdwv","mykjivkusj","nsaonyztwc","qrfgldyhlh","bosdtsdyqd","ehrevvxqif","wbzmjyjfdf","tfianpiaog","qekxpdcyyr","uucorufbof","wtevpmyhrl","rukpyarpsi","cepeywkseh","ojmryulppw","wuikyjhzob","sqzoktnzuy","khsoxlvhup","ontsjwvxkm","vgkjkthfou","zwxggpjwfq","mlzagjxgop","mnvtpfcurn","ofbwmqqjck","ncyvtudvxi","fhhhoujqvd","oyocbvfscq","vrfdmekkne","kyhdwdccvj","oamthajfwp","skbeefznqb","nmxrbeqbin","dsfgrgvhai","kekgxzfapc","zcktoulunj","eyghxbfuff","unkoisidbp","yqcszpwlsh","odqrxnafbi","xizbrrnrvd","cbwocmwywh","eidirwdcna","ddlspelvhb","mtrootkwov","jwsljbxiir","woxvjxzmlf","gdhggivnwn","eanmukbhux","fbklautvqh","lhyvfjfyqu","nskdhderdb","mkztljczdz","hewxtsdnqb","glvbejlikv","algkegqaye","smctfixmpm","cbswontddn","nvvjsngegc","yjwvjiqyyj","anmevjzqlh","vbhwrufipx","hhdaqlqwfb","itwtasbfyq","xlqblfgwbz","tztwxwtqly","ofaiyigcqo","mpsfmlbuvm","lkglcmmgeo","vernzhyyor","ijsspkwxlq","jgrigfcvqd","rmuvsolcgg","rjnwwsnntj","lzgdubjhvf","gbnnfndxuv","nmzcucddzk","byomeswppp","sddjuodyex","mzfaimjbmk","tjoxyedytj","jhrkowkarp","fpetuijgyf","feluxswqjz","jfacwolczc","jxlzzbdqve","keuypuycip","lqwtwxlpqy","orgnovfuie","ezebcnqxrg","nxixcivudf","rzyvquqkpm","wknkmyoruj","irjxlpyeho","fdapcniokp","lgxwneqydv","ofutmicmoz","sqkeleydry","lshxlzgqcd","khazrywaeo","zevotvzzsp","eommfqifoj","simrlbswhh","wwdxsixwnr","vfczhhhari","qjlpfazirr","itvybvloab","svrtyqywch","hbpjnbilxp","uldrirmgwu","mztaquhmlx","srxykutaps","pghydrupfw","opjnhhnhfv","bkrvxvznka","zroatxyyjw","zwykmninto","wnpkdkxpya","uikgjrlzts","ygdchaqzci","wxghgjebwm","kywvmyocgx","hfxlrsduzw","evrkkcvrel","fhalsvscrv","lkxtuwztcs","ckopkhmpgq","hjgatgfcze","tqhwbeahlj","sealbiuzxc","ztvgcifqtv","pjzrinafeb","avuqiaketz","jevwyqbfhu","jmapzsslra","rzntholoeo","ibipbzrsvf","zhjbxoenyo","nufzhzirmv","jnnfzuayxn","thfovmskvz","mqvxuzpaom","ivbzzdcisr","aweqlukvlp","afaxqymigf","oarfyrdhms","cbubogutpi","jaxesqgphz","ttthprguef","crelqozlxf","sklkdeuzex","gnyseldotc","gjaawibrss","goaubvkjyz","ynnrpvrlry","gzulpoqwgj","zhavcucufn","zxrdjciimx","pyfnmzvnoz","pbdlhgnsfj","atwfikfwdn","xzrlijkeuu","uxohrebvqw","oitdzxgktc","hrxfqfevpj","oiujenbhve","kuirbjxkul","izijpdfusz","ybmxnxtosa","prjewcuovs","xjwsnwrkpr","zodmkpcucu","tetminqndw","ehqihxrwqx","buyxcfqyzs","uoajldfwer","rdcaenrggj","vokuujwyyh"};
 
 	initial_c_bpt("test relation");
 
@@ -53,14 +76,25 @@ int main() {
 		c_insert_into_tree("test relation", dummy);
 	}
 
+
+	// Query Char
+
 	traverse("test relation");
+	char test2[11] = "nkpgrtgady";
+	//char test2[11] = "skbeefznqb";
 
+	rid* test_query2 = c_query("test relation", test2);
 
-
+	if(test_query2 != 0)
+		cout<<"slot id: "<<test_query2->slot_id<<endl;
+	else
+		cout<<"Key Not Found"<<endl;
+	
+/*
 
 	// Delete Char & Traverse Example
 
-	char test[11] = "hahawidkfj";
+	char test[11] = "skbeefznqb";
 	c_delete_from_tree("test relation", test);
 
 	traverse("test relation");
@@ -185,6 +219,6 @@ int main() {
 		cout<<"Second slot id: "<<slot_ids.at(1);
 	}
 
-
+*/
 	return 0;
 }

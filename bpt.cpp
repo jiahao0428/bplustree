@@ -788,7 +788,7 @@ void traverse(string relation) {
 		printf("*********Relation Not Found**********\n");
 
 	} else if(pos2 >= c_relations.size()) {
-		cout<<relations.at(pos1);
+
 		i_traverse(trees.at(pos1));
 
 	} else if(pos1 >= relations.size()) {
@@ -863,8 +863,8 @@ void i_print_leaf_ascending(bpt_node *nodepointer)
 			for (int i = 0; i < nodepointer->key_num; i++)
 			{
 				printf("key: %d ,", nodepointer->key[i]);
-				printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
-				printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
+				//printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
+				//printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
 			}
 
 			printf("\nkey num: %d\n", nodepointer->key_num);
