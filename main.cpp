@@ -70,7 +70,7 @@ int main() {
 
 	// Delete Integer & Traverse & Print Leaf Ascending Example
 
-	int key_to_delete[11] = {3,9, 5,10, 27, 13, 2, 7,44,22,6};
+	int key_to_delete[11] = {3, 9, 5, 10, 27, 13, 2, 7, 44, 22, 6};
 
 	for(int i=0; i<sizeof(key_to_delete)/sizeof(key_to_delete[0]); i++) {
 		cout<<"====== delete key: "<<key_to_delete[i] << " ======"<<endl;
@@ -114,10 +114,20 @@ int main() {
 		cout<<"Key Not Found"<<endl;
 
 
-	// Range Query Example
+	// =============Integer Range Query Example===================
 
-	vector<rid*> haha = range_query("test world", 1, 10);
-	cout<<"Range query sample: "<<haha.at(0)->slot_id<<endl;
+	vector<rid*> haha = i_range_query("test world", 1, 10);
+	cout<<"Integer range query sample: "<<haha.at(0)->slot_id<<endl;
+
+
+
+	// =============Character Range Query Example===================
+
+	char key1[11] = "jnhgtvbgff";
+	char key2[11] = "ujhqqazxsw";
+	vector<rid*> s_rids = c_range_query("test relation", key1, key2);
+	cout<<"Character range query sample: "<<s_rids.at(1)->slot_id<<endl;
+
 
 
 	// ===================Scan Example============================

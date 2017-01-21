@@ -8,7 +8,7 @@
 using namespace std;
 
 // Integer, M: 512 bytes page ==> 63 +1 for overflow
-// Character,N: 37 ==> 36 +1 for overflow
+// Character, N: 37 ==> 36 +1 for overflow
 
 const int M = 64;
 const int N = 37;
@@ -97,7 +97,7 @@ extern void initial_i_bpt(std::string relation) ;
 extern void i_insert_into_tree(std::string relation, entry *child);
 extern void i_delete_from_tree(std::string relation, int key);
 extern rid* i_query(std::string relation, int key);
-extern std::vector<rid*> range_query(std::string relation, int key1, int key2);
+extern std::vector<rid*> i_range_query(std::string relation, int key1, int key2);
 
 extern void i_traverse(bpt_node *nodepointer);
 extern void i_print_leaf_ascending(bpt_node *nodepointer);
@@ -111,6 +111,7 @@ extern void initial_c_bpt(std::string relation) ;
 extern void c_insert_into_tree(std::string relation, c_entry *child);
 extern void c_delete_from_tree(std::string relation, char* key);
 extern rid* c_query(std::string relation, char* key);
+extern std::vector<rid*> c_range_query(std::string relation, char* key1, char* key2);
 
 extern void c_traverse(c_bpt_node *nodepointer);
 extern void c_print_leaf_ascending(c_bpt_node *nodepointer);

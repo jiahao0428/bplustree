@@ -39,6 +39,8 @@ void c_print_leaf_descending(c_bpt_node *nodepointer);
 void c_traverse(c_bpt_node *nodepointer);
 rid* c_query(std::string relation, char* key);
 rid* c_query_in_node(c_bpt_node* nodepointer, char* key);
+vector<rid*> c_range_query(string relation, char* key1, char* key2);
+vector<rid*> c_range_query_in_node(c_bpt_node* nodepointer, char* key1, char* key2);
 void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
 void c_calculate_slotted_page(c_bpt_node* nodepointer, int* slotted_data_page);
 
@@ -888,6 +890,43 @@ rid* c_query_in_node(c_bpt_node* nodepointer, char* key) {
 	}
 
 	return  NULL; 
+}
+
+vector<rid*> c_range_query(string relation, char* key1, char* key2) {
+	ptrdiff_t pos = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
+
+	vector<rid*> list;
+
+	if(pos >= c_relations.size()) {
+    	printf("*********Relation Not Found**********\n");
+    	return list;
+	} else {
+		return c_range_query_in_node(c_trees.at(pos), key1, key2);
+	}
+}
+
+
+vector<rid*> c_range_query_in_node(c_bpt_node* nodepointer, char* key1, char* key2) {
+	
+	c_bpt_node* leaf = c_find_leaf(nodepointer, key1);
+	int i = 0;
+
+	vector<rid*> list;
+
+	while(true) {
+		if(strcmp(leaf->key[i], key1) >= 0 && strcmp(leaf->key[i], key2) <= 0) {
+			list.insert(list.end(), (rid*)leaf->pointer[i+1]);
+		} else if(strcmp(leaf->key[i], key2) > 0) {
+			break;
+		} else if (i == leaf->key_num - 1 && strcmp(leaf->key[i], key2) < 0  && leaf->next != 0) {
+			leaf = (c_bpt_node *)leaf->next;
+			i = -1;
+		}
+
+		i++;
+	}
+
+	return  list; 
 }
 
 void c_find_slotted_page(c_bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id) {

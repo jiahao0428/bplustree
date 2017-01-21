@@ -43,8 +43,8 @@ void i_traverse(bpt_node *nodepointer);
 void scan(string relation, int* leaf_page, int * index_page);
 rid* i_query(std::string relation, int key);
 rid* query_in_node(bpt_node* nodepointer, int key);
-vector<rid*> range_query(std::string relation, int key1, int key2);
-vector<rid*> range_query_in_node(bpt_node* nodepointer, int key1, int key2);
+vector<rid*> i_range_query(std::string relation, int key1, int key2);
+vector<rid*> i_range_query_in_node(bpt_node* nodepointer, int key1, int key2);
 vector<unsigned short int> display_page(string relation, unsigned short int page_id);
 void i_file_statistics(string relation, int* index_page, int* slotted_data_page);
 void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
@@ -975,7 +975,7 @@ rid* query_in_node(bpt_node* nodepointer, int key) {
 	return  NULL; 
 }
 
-vector<rid*> range_query(string relation, int key1, int key2) {
+vector<rid*> i_range_query(string relation, int key1, int key2) {
 	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
 
 	vector<rid*> list;
@@ -984,12 +984,12 @@ vector<rid*> range_query(string relation, int key1, int key2) {
     	printf("*********Relation Not Found**********\n");
     	return list;
 	} else {
-		return range_query_in_node(trees.at(pos), key1, key2);
+		return i_range_query_in_node(trees.at(pos), key1, key2);
 	}
 }
 
 
-vector<rid*> range_query_in_node(bpt_node* nodepointer, int key1, int key2) {
+vector<rid*> i_range_query_in_node(bpt_node* nodepointer, int key1, int key2) {
 	
 	bpt_node* leaf = find_leaf(nodepointer, key1);
 	int i = 0;
