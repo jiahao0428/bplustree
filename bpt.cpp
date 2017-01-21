@@ -55,7 +55,7 @@ void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot
 bpt_node *new_bpt_node()
 {
 
-	bpt_node *p = new bpt_node ;
+	bpt_node *p = new bpt_node() ;
 
 	p -> is_leaf = false;
     p -> is_root = false;
@@ -325,7 +325,7 @@ void i_delete_from_tree(string relation, int key)
 
 	} else {
 
-		entry *dummy = new entry;
+		entry *dummy = new entry();
 
 		delete_entry(trees.at(pos), key, dummy);
 
@@ -363,7 +363,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 						memset(oldchildentry, 0, sizeof(oldchildentry));
 					} else {
 						
-						bpt_node * s = new bpt_node;
+						bpt_node * s = new bpt_node();
 
 						if(!nodepointer -> is_root) {
 
@@ -415,7 +415,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 								}
 							}
 
-							entry *m = new entry;
+							entry *m = new entry();
 
 							if(!need_to_merge) {
 
@@ -431,7 +431,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 								memset(oldchildentry, 0, sizeof(oldchildentry));
 							} else {
 
-								bpt_node* pointer_to_replace = new bpt_node;
+								bpt_node* pointer_to_replace = new bpt_node();
 								pointer_to_replace = s;
 
 
@@ -495,10 +495,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			return;
 		} else {
 
-			bpt_node *s = new bpt_node; 
-			entry* n = new entry;
-
-			n = find_parent_entry((bpt_node *) nodepointer -> father, nodepointer);
+			bpt_node *s = new bpt_node(); 
 
 			bool need_to_merge = false;
 			bool is_left = false;
@@ -536,7 +533,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 				memset(oldchildentry, 0, sizeof(oldchildentry));
 			} else {
 
-				entry* m = new entry;
+				entry* m = new entry();
 
 				if(!is_left) {
 					merge(nodepointer, s);
@@ -607,7 +604,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 				L -> key[L -> key_num] = S -> key[i];
 				L -> pointer[L->key_num + 1] = S -> pointer[i + 1];
 
-				entry *dummy = new entry;
+				entry *dummy = new entry();
 				delete_in_node(S, S->key[i], dummy);
 				++L -> key_num;
 
@@ -627,7 +624,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 				S -> key[i] = L -> key[L->key_num - 1 - i];
 				S -> pointer[i + 1] = L -> pointer[L -> key_num - i];
 
-				entry *dummy = new entry;
+				entry *dummy = new entry();
 				delete_in_node(L, L->key[L->key_num -1 - i], dummy);
 				++S -> key_num;
 
@@ -642,7 +639,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 
 			if(L -> key_num < S -> key_num) { 
 
-				entry* dummy = new entry;
+				entry* dummy = new entry();
 				dummy = find_parent_entry((bpt_node*)S->father, S);
 
 				L -> key[L -> key_num] = dummy -> key;
@@ -677,7 +674,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 					break;
 				}
 			} else {
-				entry* dummy = new entry;
+				entry* dummy = new entry();
 				dummy = find_parent_entry((bpt_node*)S->father, S);
 
 				for(int j=0;j<((bpt_node*)L->father)->key_num; j++) {
@@ -785,7 +782,7 @@ entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace)
 
 	for(int i=0; i<nodepointer->key_num; i++) {
 		if (nodepointer -> pointer[i + 1] == pointer_to_replace) {
-			entry* dummy = new entry; 
+			entry* dummy = new entry(); 
 			dummy -> key = nodepointer -> key[i];
 			dummy -> value = nodepointer -> pointer[i + 1];
 

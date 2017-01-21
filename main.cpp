@@ -8,29 +8,6 @@ using namespace std;
 
 int main() {
 
-	
-	//======================Test Case==============================
-
-	/*initial_i_bpt("test case");
-
-	int key_test_case[5] = {6, 8, 22, 44, 12}; 
-
-	for(int i=0; i<sizeof(key_test_case)/sizeof(key_test_case[0]); i++) {
-		entry *dummy= new entry;
-		rid *test = new rid;
-
-		test -> page_id = 90;
-		test -> slot_id = 80;
-
-		dummy -> key = key_test_case[i];
-		dummy -> info = test;
-
-		i_insert_into_tree("test case", dummy);
-	}
-
-	traverse("test case");	
-	cout<<"========================"<<endl;
-*/
 
 	// Insert Integer & Traverse Example
 
@@ -38,8 +15,8 @@ int main() {
 	initial_i_bpt("test relation1");
 
 	for(int i=0; i<sizeof(key)/sizeof(key[0]); i++) {
-		entry *dummy= new entry;
-		rid *test = new rid;
+		entry *dummy= new entry();
+		rid *test = new rid();
 
 		test -> page_id = 90;
 		test -> slot_id = 80;
@@ -66,8 +43,8 @@ int main() {
 
 	for(int i=0; i<sizeof(s_key)/sizeof(s_key[0]); i++) {
 
-		c_entry *dummy= new c_entry;
-		rid *test = new rid;
+		c_entry *dummy= new c_entry();
+		rid *test = new rid();
 
 		test -> page_id = 90;
 		test -> slot_id = 80;
@@ -86,7 +63,6 @@ int main() {
 	traverse("test relation");
 	print_leaf_ascending("test relation");
 	char test2[11] = "nkpgrtgady";
-	//char test2[11] = "skbeefznqb";
 
 	rid* test_query2 = c_query("test relation", test2);
 
@@ -95,15 +71,14 @@ int main() {
 	else
 		cout<<"Key Not Found"<<endl;
 	
-/*
 
+	
 	// Delete Char & Traverse Example
 
 	char test[11] = "skbeefznqb";
 	c_delete_from_tree("test relation", test);
 
 	traverse("test relation");
-
 
 
 
@@ -129,8 +104,8 @@ int main() {
 	initial_i_bpt("test world");
 
 	for(int i=0; i<sizeof(key_test)/sizeof(key_test[0]); i++) {
-		entry *dummy= new entry;
-		rid *test = new rid;
+		entry *dummy= new entry();
+		rid *test = new rid();
 
 		test -> page_id = 90;
 		test -> slot_id = 80;
@@ -163,12 +138,14 @@ int main() {
 
 	// ===================Query Example===========================
 
-	rid* test_query = i_query("test world", 44);
+	rid* test_query = i_query("test world", 4);
 
 	if(test_query != 0)
 		cout<<"slot id: "<<test_query->slot_id<<endl;
 	else
 		cout<<"Key Not Found"<<endl;
+
+
 
 
 	// =============Integer Range Query Example===================
@@ -207,6 +184,7 @@ int main() {
 	cout<< "Total index page: "<<ipage<<endl;
 
 
+
 	// ==============File Statistics Example======================
 
 	lpage = 0;
@@ -217,12 +195,36 @@ int main() {
 	cout<< "Total slotted page in test relation1: "<<slotted_data_page<<endl;
 
 
+
 	// ===============Display Page Example========================
 
 	vector<unsigned short int> slot_ids = display_page("test relation", 90);
 	if(slot_ids.size() > 0) {
 		cout<<"Second slot id: "<<slot_ids.at(1);
 	}
+
+
+	//======================Test Case==============================
+
+	/*initial_i_bpt("test case");
+
+	int key_test_case[5] = {6, 8, 22, 44, 12}; 
+
+	for(int i=0; i<sizeof(key_test_case)/sizeof(key_test_case[0]); i++) {
+		entry *dummy= new entry();
+		rid *test = new rid();
+
+		test -> page_id = 90;
+		test -> slot_id = 80;
+
+		dummy -> key = key_test_case[i];
+		dummy -> info = test;
+
+		i_insert_into_tree("test case", dummy);
+	}
+
+	traverse("test case");	
+	cout<<"========================"<<endl;
 */
 
 	return 0;
