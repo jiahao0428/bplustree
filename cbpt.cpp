@@ -818,17 +818,20 @@ void c_traverse(c_bpt_node *nodepointer, bool print)
 				printf("leaf: ");
 		}
 		
-		if(print)
+		if(print) {
 			printf("%s ", nodepointer->key[i]);
+		}
 	}
 
 	if (!nodepointer -> is_root) {
-		if(print)
+		if(print) {
 			printf("\nfather 1st key: %s\n", ((c_bpt_node *)nodepointer->father)->key[0]);
+		}
 	}
 	else {
-		if(print)
+		if(print) {
 			printf("\n");
+		}
 	}
 
 	if(!nodepointer -> is_leaf) {
@@ -836,7 +839,7 @@ void c_traverse(c_bpt_node *nodepointer, bool print)
 		c_total_index_page ++;
 
 		for(int i=0; i<=nodepointer -> key_num; i++) {
-			c_traverse((c_bpt_node *)nodepointer -> pointer[i], true);
+			c_traverse((c_bpt_node *)nodepointer -> pointer[i], print);
 			continue;
 		}
 	}
