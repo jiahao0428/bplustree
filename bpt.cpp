@@ -132,6 +132,7 @@ void insert(bpt_node *nodepointer, entry *child)
 {
 	if (!nodepointer -> is_leaf) {
 		for(int i=0; i<nodepointer->key_num; i++) {
+
 			if (child -> key >= nodepointer -> key[nodepointer->key_num-1]) {
 				insert((bpt_node *)nodepointer -> pointer[nodepointer->key_num], child);
 			} else if(child -> key < nodepointer -> key[0]) {
@@ -140,30 +141,28 @@ void insert(bpt_node *nodepointer, entry *child)
 				insert((bpt_node *)nodepointer -> pointer[i + 1], child);
 			}
 
-			if((nodepointer -> key[i] <= child -> key && child -> key < nodepointer -> key[i+1]) || child -> key < nodepointer -> key[0] || child -> key > nodepointer -> key[nodepointer->key_num-1]) {
+			if(child->key == 0) {
+				return;
+			} else if((nodepointer -> key[i] <= child -> key && child -> key < nodepointer -> key[i+1]) || child -> key < nodepointer -> key[0] || child -> key > nodepointer -> key[nodepointer->key_num-1]) {
 				// usual case, didn't split child
 				// Testing
-				if(child->key == 0) {
+				if (nodepointer -> key_num  < M - 1) {
+					insert_in_node((bpt_node *) nodepointer, child);
+
+					if(((c_bpt_node *)child -> value) !=0 && ((bpt_node *)child -> value) -> is_leaf) {
+						int x = 0;
+						while (nodepointer -> pointer[ x ] != child -> value) x ++ ;
+
+						if (x < M && ((c_bpt_node *)nodepointer -> pointer[ x ]) -> next != 0)
+							((bpt_node *)nodepointer -> pointer[ x ]) -> next = nodepointer -> pointer[ x + 1 ];
+
+					}
+
+					memset(child, 0, sizeof(child));
 					return;
 				} else {
-					if (nodepointer -> key_num  < M - 1) {
-						insert_in_node((bpt_node *) nodepointer, child);
-
-						if(((c_bpt_node *)child -> value) !=0 && ((bpt_node *)child -> value) -> is_leaf) {
-							int x = 0;
-							while (nodepointer -> pointer[ x ] != child -> value) x ++ ;
-
-							if (x < M && ((c_bpt_node *)nodepointer -> pointer[ x ]) -> next != 0)
-								((bpt_node *)nodepointer -> pointer[ x ]) -> next = nodepointer -> pointer[ x + 1 ];
-
-						}
-
-						memset(child, 0, sizeof(child));
-						return;
-					} else {
-						insert_in_node((bpt_node *) nodepointer, child);
-						return;
-					}
+					insert_in_node((bpt_node *) nodepointer, child);
+					return;
 				}
 			}
 			
@@ -329,6 +328,8 @@ void i_delete_from_tree(string relation, int key)
 		entry *dummy = new entry;
 
 		delete_entry(trees.at(pos), key, dummy);
+
+		delete dummy;
 	}
 
 	
@@ -449,6 +450,9 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 									merge(s, (bpt_node *) nodepointer);
 								}			
 							}
+
+							delete m;
+
 						} else {
 							// Not sure...
 							if(nodepointer->key_num <= 1) {
@@ -545,6 +549,8 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 
 				oldchildentry -> key = m -> key;
 				oldchildentry -> value = m -> value;
+
+				delete m;
 			}
 
 			return;
@@ -605,9 +611,12 @@ void redistribute(bpt_node *L, bpt_node *S)
 				delete_in_node(S, S->key[i], dummy);
 				++L -> key_num;
 
+				delete dummy;
+
 				if(L -> key_num >= S -> key_num) {
 					break;
 				}
+
 			} else {
 				//Shift S key
 				for(int j=S -> key_num;j>0;j--) {
@@ -621,6 +630,8 @@ void redistribute(bpt_node *L, bpt_node *S)
 				entry *dummy = new entry;
 				delete_in_node(L, L->key[L->key_num -1 - i], dummy);
 				++S -> key_num;
+
+				delete dummy;
 
 				if(S -> key_num >= L -> key_num) {
 					break;
@@ -647,6 +658,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 					}
 				}
 
+				delete dummy;
 
 				for(int k=0; k<S->key_num; k ++) {
 					if(k < S->key_num - 1) {
@@ -675,6 +687,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 					}
 				}
 
+
 				for(int k=0; k<S->key_num; k ++) {
 					
 					if(k == 0) {
@@ -697,6 +710,8 @@ void redistribute(bpt_node *L, bpt_node *S)
 
 				++S -> key_num;
 				--L -> key_num;
+
+				delete dummy;
 
 				if(S -> key_num >= M/2) {
 					break;

@@ -48,6 +48,8 @@ int main() {
 		dummy -> info = test;
 
 		i_insert_into_tree("test relation1", dummy);
+
+		delete dummy;
 	}
 
 	traverse("test relation1");
@@ -74,14 +76,17 @@ int main() {
 		dummy -> info = test;
 
 		c_insert_into_tree("test relation", dummy);
+
+		delete dummy;
 	}
 
 
 	// Query Char
 
 	traverse("test relation");
-	//char test2[11] = "nkpgrtgady";
-	char test2[11] = "skbeefznqb";
+	print_leaf_ascending("test relation");
+	char test2[11] = "nkpgrtgady";
+	//char test2[11] = "skbeefznqb";
 
 	rid* test_query2 = c_query("test relation", test2);
 
@@ -218,7 +223,7 @@ int main() {
 	if(slot_ids.size() > 0) {
 		cout<<"Second slot id: "<<slot_ids.at(1);
 	}
-
 */
+
 	return 0;
 }

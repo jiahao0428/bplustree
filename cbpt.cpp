@@ -135,12 +135,14 @@ void c_insert(c_bpt_node *nodepointer, c_entry *child)
 				c_insert((c_bpt_node *)nodepointer -> pointer[i + 1], child);
 			}
 
-			if((strcmp(nodepointer -> key[i], child -> key) <= 0 && strcmp(child -> key, nodepointer -> key[i+1])) < 0 || strcmp(child -> key, nodepointer -> key[0]) < 0 || strcmp(child -> key, nodepointer -> key[nodepointer->key_num-1]) > 0) {
+			if(strcmp(child->key, "") == 0) {
+
+				return;
+
+			} else if((strcmp(nodepointer -> key[i], child -> key) <= 0 && strcmp(child -> key, nodepointer -> key[i+1])< 0) || strcmp(child -> key, nodepointer -> key[0]) < 0 || strcmp(child -> key, nodepointer -> key[nodepointer->key_num-1]) > 0) {
 				// usual case, didn't split child
 				// Testing
-				if(strcmp(child->key, "") == 0) {
-					return;
-				} else {
+				 //else {
 
 					if (nodepointer -> key_num  < N - 1) {
 						c_insert_in_node(nodepointer, child);
@@ -160,7 +162,7 @@ void c_insert(c_bpt_node *nodepointer, c_entry *child)
 					}
 
 					return;
-				}
+				//}
 			}
 			
 		}
@@ -329,6 +331,8 @@ void c_delete_from_tree(string relation, char* key)
 
 		delete_c_entry(c_trees.at(pos), key, dummy);
 
+		delete dummy;
+
 	}
 
 	return;
@@ -450,6 +454,9 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 									c_merge(s, (c_bpt_node *) nodepointer);
 								}			
 							}
+
+							delete m;
+
 						} else {
 							// Not sure...
 							if(nodepointer->key_num <= 1) {
@@ -497,7 +504,7 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 			c_bpt_node *s = new c_bpt_node; 
 			c_entry* n = new c_entry;
 
-			n = find_parent_c_entry((c_bpt_node *) nodepointer -> father, nodepointer);
+			//n = find_parent_c_entry((c_bpt_node *) nodepointer -> father, nodepointer); n -> value
 
 			bool need_to_merge = false;
 			bool is_left = false;
@@ -554,6 +561,9 @@ void delete_c_entry(c_bpt_node *nodepointer, char* key, c_entry *oldchildc_entry
 
 				strcpy(oldchildc_entry -> key, m -> key);
 				oldchildc_entry -> value = m -> value;
+
+				delete m;
+
 			}
 
 			return;
@@ -616,6 +626,8 @@ void c_redistribute(c_bpt_node *L, c_bpt_node *S)
 				c_delete_in_node(S, S->key[i], dummy);
 				++L -> key_num;
 
+				delete dummy;
+
 				if(L -> key_num >= S -> key_num) {
 					break;
 				}
@@ -632,6 +644,8 @@ void c_redistribute(c_bpt_node *L, c_bpt_node *S)
 				c_entry *dummy = new c_entry;
 				c_delete_in_node(L, L->key[L->key_num -1 - i], dummy);
 				++S -> key_num;
+
+				delete dummy;
 
 				if(S -> key_num >= L -> key_num) {
 					break;
@@ -671,6 +685,8 @@ void c_redistribute(c_bpt_node *L, c_bpt_node *S)
 
 				--S -> key_num;
 				++L -> key_num;
+
+				delete dummy;
 
 				if(L -> key_num >= N/2) {
 					break;
@@ -837,8 +853,8 @@ void c_print_leaf_ascending(c_bpt_node *nodepointer)
 			for (int i = 0; i < nodepointer->key_num; i++)
 			{
 				printf("key: %s ,", nodepointer->key[i]);
-				printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
-				printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
+				//printf("slot id: %u ,", ((rid*)nodepointer->pointer[i+1])->slot_id);
+				//printf("page id: %u ;", ((rid*)nodepointer->pointer[i+1])->page_id);
 			}
 
 			printf("\nkey num: %d\n", nodepointer->key_num);
