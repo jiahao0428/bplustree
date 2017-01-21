@@ -301,8 +301,10 @@ void split( bpt_node *node, entry *child)
         	nodd -> is_leaf = true ;
 
         	//Set Sibling pointer
-        	if (node -> next != 0)
+        	if (node -> next != 0) {
         		((bpt_node *)node -> next) -> previous = nodd;
+        		nodd -> next = node -> next;
+        	}
 
         	node -> next = nodd;
         	nodd -> previous = node;    	
@@ -786,7 +788,7 @@ void traverse(string relation) {
 		printf("*********Relation Not Found**********\n");
 
 	} else if(pos2 >= c_relations.size()) {
-
+		cout<<relations.at(pos1);
 		i_traverse(trees.at(pos1));
 
 	} else if(pos1 >= relations.size()) {

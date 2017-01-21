@@ -85,7 +85,7 @@ c_bpt_node *c_find_leaf( c_bpt_node* nodepointer, char* key )
 
 c_bpt_node *c_tree_search(c_bpt_node *nodepointer, char* key)
 {
-	if (nodepointer -> is_leaf) {
+	if(nodepointer -> is_leaf) {
 		return nodepointer;
 	} else {
 		if ( strcmp(key, nodepointer -> key[0]) < 0) {
@@ -300,8 +300,10 @@ void c_split( c_bpt_node *node, c_entry *child)
         	nodd -> is_leaf = true ;
 
         	//Set Sibling pointer
-        	if (node -> next != 0)
+        	if (node -> next != 0) {
         		((c_bpt_node *)node -> next) -> previous = nodd;
+        		nodd -> next = node -> next;
+        	}
 
         	node -> next = nodd;
         	nodd -> previous = node;    	
@@ -893,7 +895,7 @@ rid* c_query_in_node(c_bpt_node* nodepointer, char* key) {
 }
 
 vector<rid*> c_range_query(string relation, char* key1, char* key2) {
-	
+
 	ptrdiff_t pos = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
 	vector<rid*> list;
