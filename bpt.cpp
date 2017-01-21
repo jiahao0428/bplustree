@@ -18,29 +18,16 @@ int splite_count ;
 int total_leaf_page;
 int total_index_page;
 
-int MAX_PAGE_SIZE;
-int CURRENT_TYPE;
-
-
-const int BPT_TYPE_INT = 1;
-const int BPT_TYPE_CHAR = 2;
-
-const int OPERATION_EQUAL = 1;
-const int OPERATION_NOT_EQUAL = 2;
-const int OPERATION_GREATER_EQUAL = 3;
-const int OPERATION_GREATER = 4;
-const int OPERATION_LESS_EQUAL = 5;
-const int OPERATION_LESS = 6;
 
 bpt_node *new_bpt_node();
-void initial_bpt(string relation, int data_type);
+void initial_i_bpt(string relation);
 bpt_node *find_leaf( bpt_node* nodepointer, int key ) ;
 bpt_node *tree_search(bpt_node *nodepointer, int key);
-void insert_into_tree(entry *child);
+void i_insert_into_tree(string relation, entry *child);
 void insert(bpt_node *nodepointer, entry *entry);
 void insert_in_node( bpt_node *node , entry *entry);
 void split( bpt_node *node , entry *entry);
-void delete_from_tree(int key);
+void i_delete_from_tree(string relation, int key);
 void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry) ;
 void delete_in_node( bpt_node *node , int key , entry *oldchildentry);
 void redistribute(bpt_node *L, bpt_node *S) ;
@@ -48,16 +35,20 @@ void merge(bpt_node *L, bpt_node *S) ;
 void replace_parent_entry(bpt_node *nodepointer, int key, bpt_node *pointer_to_replace);
 void replace_key(bpt_node *nodepointer, int key, int key_to_replace);
 entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace);
-void print_leaf_ascending(bpt_node *nodepointer);
-void print_leaf_descending(bpt_node *nodepointer);
-void traverse(bpt_node *nodepointer);
-bool compare_key (void* key1, void* key2, int action);
-void scan(string relation);
-rid* query(std::string relation, int key);
+void print_leaf_ascending(string relation);
+void i_print_leaf_ascending(bpt_node *nodepointer);
+void print_leaf_descending(string relation);
+void i_print_leaf_descending(bpt_node *nodepointer);
+void traverse(string relation);
+void i_traverse(bpt_node *nodepointer);
+void scan(string relation, int* leaf_page, int * index_page);
+rid* i_query(std::string relation, int key);
 rid* query_in_node(bpt_node* nodepointer, int key);
-void range_query(std::string relation, int key1, int key2);
+vector<rid*> range_query(std::string relation, int key1, int key2);
+vector<rid*> range_query_in_node(bpt_node* nodepointer, int key1, int key2);
 void display_page(std::string relation, unsigned short int page_id);
-void file_statistics(std::string relation);
+void i_file_statistics(string relation, int* index_page, int* slotted_data_page);
+void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
 
 
 
@@ -79,7 +70,7 @@ bpt_node *new_bpt_node()
 }
 
 
-void initial_bpt(string relation, int data_type)
+void initial_i_bpt(string relation)
 {
 
 	root = new_bpt_node();
@@ -88,17 +79,6 @@ void initial_bpt(string relation, int data_type)
 
 	relations.insert(relations.end(), relation);
 	trees.insert(trees.end(), root);
-
-	if(data_type == BPT_TYPE_INT) {
-		MAX_PAGE_SIZE = M;
-		root -> data_type = BPT_TYPE_INT;
-		CURRENT_TYPE = BPT_TYPE_INT;
-
-	} else {
-		MAX_PAGE_SIZE = N;
-		root -> data_type = BPT_TYPE_CHAR;
-		CURRENT_TYPE = BPT_TYPE_CHAR;
-	}
 
     return;
 }
@@ -131,9 +111,20 @@ bpt_node *tree_search(bpt_node *nodepointer, int key)
 	}
 }
 
-void insert_into_tree(entry *child) 
+void i_insert_into_tree(string relation, entry *child) 
 {
-	insert(root, child);
+
+	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
+
+	if(pos >= relations.size()) {
+		
+		printf("Relation Not Found\n");
+
+	} else {
+
+		insert(trees.at(pos), child);
+	}
+
 	return;
 }
 
@@ -156,14 +147,14 @@ void insert(bpt_node *nodepointer, entry *child)
 				if(child->key == 0) {
 					return;
 				} else {
-					if (nodepointer -> key_num  < MAX_PAGE_SIZE - 1) {
+					if (nodepointer -> key_num  < M - 1) {
 						insert_in_node((bpt_node *) nodepointer, child);
 
 						if(((c_bpt_node *)child -> value) !=0 && ((bpt_node *)child -> value) -> is_leaf) {
 							int x = 0;
 							while (nodepointer -> pointer[ x ] != child -> value) x ++ ;
 
-							if (x < MAX_PAGE_SIZE && ((c_bpt_node *)nodepointer -> pointer[ x ]) -> next != 0)
+							if (x < M && ((c_bpt_node *)nodepointer -> pointer[ x ]) -> next != 0)
 								((bpt_node *)nodepointer -> pointer[ x ]) -> next = nodepointer -> pointer[ x + 1 ];
 
 						}
@@ -180,7 +171,7 @@ void insert(bpt_node *nodepointer, entry *child)
 		}
 	} else {
 
-		if (nodepointer -> key_num < MAX_PAGE_SIZE-1) {
+		if (nodepointer -> key_num < M-1) {
 
 			insert_in_node((bpt_node *) nodepointer, child);
 			memset(child, 0, sizeof(child));
@@ -215,7 +206,7 @@ void insert_in_node( bpt_node *node , entry *child)
     
     node -> key_num += 1 ;
 
-    if ( node -> key_num == MAX_PAGE_SIZE ) { // need to split
+    if ( node -> key_num == M ) { // need to split
         split( node, child ) ;
     }
     else {
@@ -232,19 +223,19 @@ void split( bpt_node *node, entry *child)
 
     bpt_node *nodd = new_bpt_node() ;
 
-    int mid_key = node -> key[ MAX_PAGE_SIZE / 2 ] ;
-	nodd -> key_num = MAX_PAGE_SIZE - MAX_PAGE_SIZE / 2 ; 
+    int mid_key = node -> key[ M / 2 ] ;
+	nodd -> key_num = M - M / 2 ; 
 
 	if(!node->is_leaf) {
-    	nodd -> key_num = MAX_PAGE_SIZE - MAX_PAGE_SIZE / 2 - 1; 
+    	nodd -> key_num = M - M / 2 - 1; 
 
     	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
     	{
-	        nodd -> key[ i ] = node -> key[ i + ( MAX_PAGE_SIZE / 2 ) + 1] ;
-	        nodd -> pointer[ i ] = node -> pointer[ i + ( MAX_PAGE_SIZE / 2 ) + 1] ;
+	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) + 1] ;
+	        nodd -> pointer[ i ] = node -> pointer[ i + ( M / 2 ) + 1] ;
 
 	        //empty it
-	        node -> key[ i + ( MAX_PAGE_SIZE / 2 ) + 1] = 0;
+	        node -> key[ i + ( M / 2 ) + 1] = 0;
 
 	        // transfer father
 	        ((bpt_node *)nodd -> pointer[ i ]) -> father = nodd;
@@ -256,24 +247,24 @@ void split( bpt_node *node, entry *child)
 
     	for ( int i = 0 ; i < nodd -> key_num ; i ++ )
     	{
-	        nodd -> key[ i ] = node -> key[ i + ( MAX_PAGE_SIZE / 2 ) ] ;
-	        nodd -> pointer[ i + 1 ] = node -> pointer[ i + ( MAX_PAGE_SIZE / 2 ) + 1] ;
+	        nodd -> key[ i ] = node -> key[ i + ( M / 2 ) ] ;
+	        nodd -> pointer[ i + 1 ] = node -> pointer[ i + ( M / 2 ) + 1] ;
 
 
 	        //empty it
-	        node -> key[ i + ( MAX_PAGE_SIZE / 2 ) ] = 0;
+	        node -> key[ i + ( M / 2 ) ] = 0;
 			//node -> pointer[ i + ( M / 2 ) + 1] = NULL;
     	}
     }
 
-    nodd -> pointer[ nodd -> key_num ] = node -> pointer[ MAX_PAGE_SIZE ] ; // pointer when key > km
+    nodd -> pointer[ nodd -> key_num ] = node -> pointer[ M ] ; // pointer when key > km
 
     if(!node->is_leaf) {
     	((bpt_node *)nodd -> pointer[ nodd -> key_num ])->father = nodd;
     }
     
-    node -> pointer[ MAX_PAGE_SIZE ] = NULL;
-    node -> key_num = MAX_PAGE_SIZE / 2 ;
+    node -> pointer[ M ] = NULL;
+    node -> key_num = M / 2 ;
 
     if(node->is_leaf)
 	    child -> key = nodd -> key[0];
@@ -294,11 +285,7 @@ void split( bpt_node *node, entry *child)
 		root -> key_num = 1 ;
 		node -> father = nodd -> father = root ;
 
-		if(CURRENT_TYPE == BPT_TYPE_INT) {
-			root -> data_type = BPT_TYPE_INT;
-		} else {
-			root -> data_type = BPT_TYPE_CHAR;
-		}
+
 
 		root -> is_leaf = false;
 		
@@ -329,12 +316,23 @@ void split( bpt_node *node, entry *child)
     return;
 }
 
-void delete_from_tree(int key) 
+void i_delete_from_tree(string relation, int key) 
 {	
 
-	entry *dummy = new entry;
+	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
 
-	delete_entry(root, key, dummy);
+	if(pos >= relations.size()) {
+		
+		printf("Relation Not Found\n");
+
+	} else {
+
+		entry *dummy = new entry;
+
+		delete_entry(trees.at(pos), key, dummy);
+	}
+
+	
 
 	return;
 }
@@ -369,7 +367,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 					//traverse(root);
 
 
-					if(nodepointer -> key_num >= MAX_PAGE_SIZE/2) {
+					if(nodepointer -> key_num >= M/2) {
 						memset(oldchildentry, 0, sizeof(oldchildentry));
 					} else {
 						
@@ -386,9 +384,9 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 
 							for(int j=0; j<count; j++) {
 								if(parent -> pointer[j] == nodepointer && j > 0) {
-									if(((bpt_node *) parent -> pointer[j+1]) -> key_num > MAX_PAGE_SIZE/2) {
+									if(((bpt_node *) parent -> pointer[j+1]) -> key_num > M/2) {
 										s = (bpt_node *)parent -> pointer[j+1];
-									} else if(((bpt_node *)parent -> pointer[j-1]) -> key_num > MAX_PAGE_SIZE/2){
+									} else if(((bpt_node *)parent -> pointer[j-1]) -> key_num > M/2){
 										s = (bpt_node *)parent -> pointer[j-1];
 										is_left = true;
 									} else {
@@ -404,7 +402,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 									}
 									break;
 								} else if (parent -> pointer[0] == nodepointer) {
-									if(((bpt_node *)parent->pointer[1]) -> key_num > MAX_PAGE_SIZE/2) {
+									if(((bpt_node *)parent->pointer[1]) -> key_num > M/2) {
 										s = (bpt_node *)parent -> pointer[1];
 									} else {
 										need_to_merge = true;
@@ -413,7 +411,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 
 									break;
 								} else if(parent -> pointer[count] == nodepointer) {
-									if(((bpt_node *)parent -> pointer[count - 1]) -> key_num > MAX_PAGE_SIZE/2) {
+									if(((bpt_node *)parent -> pointer[count - 1]) -> key_num > M/2) {
 										s = (bpt_node *)parent -> pointer[count - 1];
 										is_left = true;
 									} else {
@@ -471,7 +469,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 							if(nodepointer->key_num <= 1) {
 								//printf("here?\n");
 								//cout<<nodepointer->key_num;
-								if(((bpt_node *)nodepointer->pointer[0]) -> key_num + ((bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < MAX_PAGE_SIZE) {
+								if(((bpt_node *)nodepointer->pointer[0]) -> key_num + ((bpt_node *)nodepointer -> pointer[1]) -> key_num + nodepointer -> key_num < M) {
 									//merge with root
 									// Problem with lost rid content
 									if(((bpt_node *)nodepointer -> pointer[0]) -> key_num > 0) {
@@ -486,12 +484,6 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 									root -> previous = NULL;
 									root -> is_root = true;
 									root -> father = NULL;
-
-									if(CURRENT_TYPE == BPT_TYPE_INT) {
-										root -> data_type = BPT_TYPE_INT;
-									} else {
-										root -> data_type = BPT_TYPE_CHAR;
-									}
 
 								}
 							}
@@ -514,7 +506,7 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			return;
 		}
 
-		if (nodepointer -> key_num >= MAX_PAGE_SIZE/2) {
+		if (nodepointer -> key_num >= M/2) {
 			//cout<<"nothing happen?";
 			memset(oldchildentry, 0, sizeof(oldchildentry));
 			return;
@@ -539,11 +531,11 @@ void delete_entry(bpt_node *nodepointer, int key, entry *oldchildentry)
 			//print_leaf_descending(root);
 
 
-			if(nodepointer -> next != 0 && ((bpt_node*) nodepointer -> next) -> key_num > MAX_PAGE_SIZE/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
+			if(nodepointer -> next != 0 && ((bpt_node*) nodepointer -> next) -> key_num > M/2 && ((bpt_node*) nodepointer -> next) -> father == nodepointer -> father) {
 				s = (bpt_node*) nodepointer -> next;
 				//cout<<"here";
-			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous) -> key_num > MAX_PAGE_SIZE/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
-				if(((bpt_node*) nodepointer -> previous) -> key_num > MAX_PAGE_SIZE/2) {
+			} else if(nodepointer -> previous != 0 && ((bpt_node*) nodepointer -> previous) -> key_num > M/2 && ((bpt_node*) nodepointer -> previous) -> father == nodepointer -> father) {
+				if(((bpt_node*) nodepointer -> previous) -> key_num > M/2) {
 					s = (bpt_node*) nodepointer -> previous;
 					is_left = true;
 					//cout<<"there";
@@ -650,7 +642,7 @@ void delete_in_node( bpt_node *node , int key , entry *oldchildentry)
 void redistribute(bpt_node *L, bpt_node *S) 
 {
 	//l key num is d - 1
-	for(int i=0; i<MAX_PAGE_SIZE; i++) {
+	for(int i=0; i<M; i++) {
 		if(L->is_leaf) {
 			
 			// Moving from right
@@ -718,7 +710,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 				--S -> key_num;
 				++L -> key_num;
 
-				if(L -> key_num >= MAX_PAGE_SIZE/2) {
+				if(L -> key_num >= M/2) {
 					break;
 				}
 			} else {
@@ -758,7 +750,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 				++S -> key_num;
 				--L -> key_num;
 
-				if(S -> key_num >= MAX_PAGE_SIZE/2) {
+				if(S -> key_num >= M/2) {
 					break;
 				}
 
@@ -771,7 +763,7 @@ void redistribute(bpt_node *L, bpt_node *S)
 
 void merge(bpt_node *L, bpt_node *S) 
 {
-	for(int i=0; i<MAX_PAGE_SIZE; i++) {
+	for(int i=0; i<M; i++) {
 		if(!L-> is_leaf) {
 			L -> key[L -> key_num] = S -> key[i];
 			L -> pointer[L -> key_num] = S -> pointer[i];
@@ -841,45 +833,28 @@ entry* find_parent_entry(bpt_node *nodepointer, bpt_node *pointer_to_replace)
 	}
 }
 
-bool compare_key (void* key1, void* key2, int action) {
+void traverse(string relation) {
+	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
+	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
-	if(CURRENT_TYPE == BPT_TYPE_INT) {
-
-		if(action == OPERATION_EQUAL) {
-			return (int *) key1 == (int *) key2;
-		} else if(action == OPERATION_NOT_EQUAL) {
-			return (int *) key1 != (int *) key2;
-		} else if(action == OPERATION_GREATER_EQUAL) {
-			return (int *) key1 >= (int *) key2;
-		} else if(action == OPERATION_GREATER) {
-			return (int *) key1 > (int *) key2;
-		} else if(action == OPERATION_LESS_EQUAL) {
-			return (int *) key1 <= (int *) key2;
-		} else {
-			return (int *) key1 < (int *) key2;
-		}
-
-	} else {
-
-		if(action == OPERATION_EQUAL) {
-			return (char *) key1 == (char *) key2;
-		} else if(action == OPERATION_NOT_EQUAL) {
-			return (char *) key1 != (char *) key2;
-		} else if(action == OPERATION_GREATER_EQUAL) {
-			return (char *) key1 >= (char *) key2;
-		} else if(action == OPERATION_GREATER) {
-			return (char *) key1 > (char *) key2;
-		} else if(action == OPERATION_LESS_EQUAL) {
-			return (char *) key1 <= (char *) key2;
-		} else {
-			return (char *) key1 < (char *) key2;
-		}
+	if(pos1 >= relations.size() && pos2 >= c_relations.size()) {
 		
+		printf("*********Relation Not Found**********\n");
+
+	} else if(pos2 >= c_relations.size()) {
+
+		i_traverse(trees.at(pos1));
+
+	} else if(pos1 >= relations.size()) {
+
+		c_traverse(c_trees.at(pos2));
+
 	}
+
+	return;
 }
 
-
-void traverse(bpt_node *nodepointer) 
+void i_traverse(bpt_node *nodepointer) 
 {
 
 	for(int i=0; i<nodepointer -> key_num; i++) {
@@ -903,7 +878,7 @@ void traverse(bpt_node *nodepointer)
 		total_index_page ++;
 
 		for(int i=0; i<=nodepointer -> key_num; i++) {
-			traverse((bpt_node *)nodepointer -> pointer[i]);
+			i_traverse((bpt_node *)nodepointer -> pointer[i]);
 			continue;
 		}
 	}
@@ -911,10 +886,32 @@ void traverse(bpt_node *nodepointer)
 	return;
 }
 
-void print_leaf_ascending(bpt_node *nodepointer) 
+void print_leaf_ascending(string relation) {
+
+	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
+	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
+
+	if(pos1 >= relations.size() && pos2 >= c_relations.size()) {
+		
+		printf("*********Relation Not Found**********\n");
+
+	} else if(pos2 >= c_relations.size()) {
+
+		i_print_leaf_ascending(trees.at(pos1));
+
+	} else if(pos1 >= relations.size()) {
+
+		c_print_leaf_ascending(c_trees.at(pos2));
+
+	}
+
+	return;
+}
+
+void i_print_leaf_ascending(bpt_node *nodepointer) 
 {
 	if(!nodepointer->is_leaf) {
-		print_leaf_ascending((bpt_node *)nodepointer->pointer[0]);
+		i_print_leaf_ascending((bpt_node *)nodepointer->pointer[0]);
 	} else {
 		while(nodepointer != 0) {
 			for (int i = 0; i < nodepointer->key_num; i++)
@@ -931,10 +928,32 @@ void print_leaf_ascending(bpt_node *nodepointer)
 	}
 }
 
-void print_leaf_descending(bpt_node *nodepointer) 
+void print_leaf_descending(string relation) {
+
+	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
+	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
+
+	if(pos1 >= relations.size() && pos2 >= c_relations.size()) {
+		
+		printf("*********Relation Not Found**********\n");
+
+	} else if(pos2 >= c_relations.size()) {
+
+		i_print_leaf_descending(trees.at(pos1));
+
+	} else if(pos1 >= relations.size()) {
+
+		c_print_leaf_descending(c_trees.at(pos2));
+
+	}
+
+	return;
+}
+
+void i_print_leaf_descending(bpt_node *nodepointer) 
 {
 	if(!nodepointer->is_leaf) {
-		print_leaf_descending((bpt_node *)nodepointer->pointer[nodepointer -> key_num]);
+		i_print_leaf_descending((bpt_node *)nodepointer->pointer[nodepointer -> key_num]);
 	} else {
 		while(nodepointer != 0) {
 			for (int i = 0; i < nodepointer->key_num; i++)
@@ -948,17 +967,22 @@ void print_leaf_descending(bpt_node *nodepointer)
 	}
 }
 
-void scan(string relation) {
-	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
+void scan(string relation, int* leaf_page, int * index_page) {
 
-	if(pos >= relations.size()) {
-    	printf("Relation Not Found\n");
-	} else {
+	total_index_page = 0;
+	total_leaf_page = 0;
+
+	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
+	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
+
+	if(pos1 >= relations.size() && pos2 >= c_relations.size()) {
+		
+		printf("*********Relation Not Found**********\n");
+
+	} else if(pos2 >= c_relations.size()) {
 		//cout<<trees.at(pos) -> key[0];
-		total_index_page = 0;
-		total_leaf_page = 0;
 
-		traverse(trees.at(pos));
+		i_traverse(trees.at(pos1));
 
 		//char test[11] = "asdasdasdd";
 
@@ -971,19 +995,24 @@ void scan(string relation) {
 			cout<<"false";
 		}*/
 
+		*leaf_page = total_leaf_page;
+		*index_page = total_index_page;
 
-		cout<<"Total Leaf Page: "<<total_leaf_page<<endl;
-		cout<<"Total Index Page: "<<total_index_page<<endl;
+	} else if(pos1 >= relations.size()) {
+		c_traverse(c_trees.at(pos2));
+
+		*leaf_page = total_leaf_page;
+		*index_page = total_index_page;
 	}
 
 	return;
 }
 
-rid* query(string relation, int key) {
+rid* i_query(string relation, int key) {
 	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
 
 	if(pos >= relations.size()) {
-    	printf("Relation Not Found\n");
+    	printf("*********Relation Not Found**********\n");
     	return NULL;
 	} else {
 		//cout<<trees.at(pos) -> key[0];
@@ -1013,29 +1042,102 @@ rid* query_in_node(bpt_node* nodepointer, int key) {
 	return  NULL; 
 }
 
-void range_query(string relation, int key1, int key2) {
+vector<rid*> range_query(string relation, int key1, int key2) {
+	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
 
+	vector<rid*> list;
+
+	if(pos >= relations.size()) {
+    	printf("*********Relation Not Found**********\n");
+    	return list;
+	} else {
+		//cout<<trees.at(pos) -> key[0];
+		return range_query_in_node(trees.at(pos), key1, key2);
+	}
 }
+
+
+vector<rid*> range_query_in_node(bpt_node* nodepointer, int key1, int key2) {
+	
+	bpt_node* leaf = find_leaf(nodepointer, key1);
+	int i = 0;
+
+	vector<rid*> list;
+
+	while(true) {
+		if(leaf->key[i] >= key1 && leaf->key[i] <= key2) {
+			list.insert(list.end(), (rid*)leaf->pointer[i+1]);
+		} else if(leaf->key[i] > key2) {
+			break;
+		} else if (i == leaf->key_num-1 && leaf->key[i] < key2  && leaf->next != 0) {
+			leaf = (bpt_node *)leaf->next;
+			i = -1;
+		}
+
+		i++;
+	}
+
+	return  list; 
+}
+
 
 void display_page(string relation, unsigned short int page_id) {
 
 }
 
 
-void file_statistics(string relation) {
-	ptrdiff_t pos = find(relations.begin(), relations.end(), relation) - relations.begin();
+void file_statistics(string relation, int* index_page, int* slotted_data_page) {
+	ptrdiff_t pos1 = find(relations.begin(), relations.end(), relation) - relations.begin();
+	ptrdiff_t pos2 = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
-	if(pos >= relations.size()) {
-    	printf("Relation Not Found\n");
-	} else {
-		//cout<<trees.at(pos) -> key[0];
+	if(pos1 >= relations.size() && pos2 >= c_relations.size()) {
+		
+		printf("*********Relation Not Found**********\n");
+
+	} else if(pos2 >= c_relations.size()) {
+
 		total_index_page = 0;
-		total_leaf_page = 0;
 
-		traverse(trees.at(pos));
-		cout<<"Total Index Page: "<<total_index_page<<endl;
+		i_traverse(trees.at(pos1));
+		*index_page = total_index_page;
 
+		i_calculate_slotted_page(trees.at(pos1), slotted_data_page);
+
+	} else if(pos1 >= relations.size()) {
+		total_index_page = 0;
+
+		c_traverse(c_trees.at(pos2));
+		*index_page = total_index_page;
+
+		c_calculate_slotted_page(c_trees.at(pos2), slotted_data_page);
 	}
+
+	return;
+}
+
+void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page) {
+	if(!nodepointer->is_leaf) {
+		i_calculate_slotted_page((bpt_node *)nodepointer->pointer[0], slotted_data_page);
+	} else {
+
+		vector<unsigned short int> pages;
+
+		while(nodepointer != 0) {
+			for (int i = 0; i < nodepointer->key_num; i++)
+			{
+
+				pages.insert(pages.end(), ((rid*)nodepointer->pointer[i+1])->page_id);
+				sort( pages.begin(), pages.end() );
+				pages.erase( unique( pages.begin(), pages.end() ), pages.end() );
+
+				*slotted_data_page = pages.size();
+
+			}
+
+			nodepointer = (bpt_node *)nodepointer->next;
+		}
+	}
+
 
 	return;
 }

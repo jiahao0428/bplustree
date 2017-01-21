@@ -5,14 +5,13 @@
 #include <string>
 #include <vector>
 
+using namespace std;
 // Integer, M: 512 bytes page ==> 63 +1 for overflow
 // Character,N: 37 ==> 36 +1 for overflow
 // const int M = 64 ;
-const int M = 5;
+const int M = 8;
 const int N = 9;
 
-#define TYPE_INT = "i";
-#define TYPE_CHAR = "A11_c";
 
 struct rid 
 {
@@ -70,35 +69,46 @@ struct c_bpt_node
 
 extern bpt_node *root ;
 extern c_bpt_node *c_root ;
-extern const int BPT_TYPE_INT;
-extern const int BPT_TYPE_CHAR;
 
-extern void initial_bpt(std::string relation, int data_type) ;
-extern void insert_into_tree(entry *child);
-extern void traverse(bpt_node *nodepointer);
-extern void delete_from_tree(int key);
-extern void print_leaf_ascending(bpt_node *nodepointer);
-extern void print_leaf_descending(bpt_node *nodepointer);
+extern std::vector<std::string> relations;
+extern std::vector<bpt_node*> trees;
 
-extern void scan(std::string relation);
-extern rid* query(std::string relation, int key);
-extern void range_query(std::string relation, int key1, int key2);
+extern std::vector<std::string> c_relations;
+extern std::vector<c_bpt_node*> c_trees;
+
+// Unified interface
+
+extern void scan(std::string relation, int* leaf_page, int * index_page);
 extern void display_page(std::string relation, unsigned short int page_id);
-extern void file_statistics(std::string relation);
+extern void file_statistics(std::string relation, int* index_page, int* slotted_data_page);
+extern void print_leaf_ascending(string relation);
+extern void print_leaf_descending(string relation);
+extern void traverse(string relation);
+
+// Integer
+
+extern void initial_i_bpt(std::string relation) ;
+extern void i_insert_into_tree(std::string relation, entry *child);
+extern void i_delete_from_tree(std::string relation, int key);
+extern rid* i_query(std::string relation, int key);
+extern std::vector<rid*> range_query(std::string relation, int key1, int key2);
+
+extern void i_traverse(bpt_node *nodepointer);
+extern void i_print_leaf_ascending(bpt_node *nodepointer);
+extern void i_print_leaf_descending(bpt_node *nodepointer);
+extern void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
 
 // Character
 
 extern void initial_c_bpt(std::string relation) ;
-extern void c_insert_into_tree(c_entry *child);
+extern void c_insert_into_tree(std::string relation, c_entry *child);
+extern void c_delete_from_tree(std::string relation, char* key);
+extern rid* c_query(std::string relation, char* key);
+
 extern void c_traverse(c_bpt_node *nodepointer);
-extern void c_delete_from_tree(char key);
 extern void c_print_leaf_ascending(c_bpt_node *nodepointer);
 extern void c_print_leaf_descending(c_bpt_node *nodepointer);
-
-extern void c_scan(std::string relation);
-extern rid* c_query(std::string relation, char key);
-extern void c_display_page(std::string relation, unsigned short int page_id);
-extern void c_file_statistics(std::string relation);
+extern void c_calculate_slotted_page(c_bpt_node* nodepointer, int* slotted_data_page);
 
 
 #endif
