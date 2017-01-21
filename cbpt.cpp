@@ -893,6 +893,7 @@ rid* c_query_in_node(c_bpt_node* nodepointer, char* key) {
 }
 
 vector<rid*> c_range_query(string relation, char* key1, char* key2) {
+	
 	ptrdiff_t pos = find(c_relations.begin(), c_relations.end(), relation) - c_relations.begin();
 
 	vector<rid*> list;

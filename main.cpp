@@ -117,7 +117,12 @@ int main() {
 	// =============Integer Range Query Example===================
 
 	vector<rid*> haha = i_range_query("test world", 1, 10);
-	cout<<"Integer range query sample: "<<haha.at(0)->slot_id<<endl;
+
+	if(haha.size() > 0) {
+
+		cout<<"Integer range query sample: "<<haha.at(0)->slot_id<<endl;
+
+	}
 
 
 
@@ -126,7 +131,12 @@ int main() {
 	char key1[11] = "jnhgtvbgff";
 	char key2[11] = "ujhqqazxsw";
 	vector<rid*> s_rids = c_range_query("test relation", key1, key2);
-	cout<<"Character range query sample: "<<s_rids.at(1)->slot_id<<endl;
+
+	if(s_rids.size() > 0) {
+		
+		cout<<"Character range query sample: "<<s_rids.at(0)->slot_id<<endl;
+
+	}
 
 
 
@@ -153,7 +163,9 @@ int main() {
 	// ===============Display Page Example========================
 
 	vector<unsigned short int> slot_ids = display_page("test relation", 90);
-	cout<<"Second slot id: "<<slot_ids.at(1);
+	if(slot_ids.size() > 0) {
+		cout<<"Second slot id: "<<slot_ids.at(1);
+	}
 
 
 	return 0;
