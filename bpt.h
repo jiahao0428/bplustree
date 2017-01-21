@@ -14,7 +14,7 @@ const int M = 64;
 const int N = 37;
 
 
-struct rid 
+struct rid
 {
 	unsigned short int page_id ;
 	unsigned short int slot_id ;
@@ -58,7 +58,7 @@ struct c_bpt_node
     bool is_root ;
     int key_num ;
     char key[ N ] [11];
-    void *pointer[ M + 1 ] ;
+    void *pointer[ N + 1 ] ;
 
     // For leaf node
     void *previous ;
@@ -102,7 +102,7 @@ extern std::vector<rid*> i_range_query(std::string relation, int key1, int key2)
 extern void i_traverse(bpt_node *nodepointer, bool print);
 extern void i_print_leaf_ascending(bpt_node *nodepointer);
 extern void i_print_leaf_descending(bpt_node *nodepointer);
-extern void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id); 
+extern void i_find_slotted_page(bpt_node *nodepointer, vector<unsigned short int>* slot_ids, unsigned short int page_id);
 extern void i_calculate_slotted_page(bpt_node* nodepointer, int* slotted_data_page);
 
 // Character
