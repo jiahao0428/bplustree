@@ -100,9 +100,9 @@ bpt_node *tree_search(bpt_node *nodepointer, int key)
 			if ( key >= nodepointer -> key[nodepointer -> key_num - 1]) {
 				return tree_search((bpt_node *)nodepointer -> pointer[nodepointer -> key_num], key);
 			} else {
-				for(int i=0; i<nodepointer -> key_num; i++) {
+				for(int i=0; i<nodepointer -> key_num - 1; i++) {
 					if (nodepointer -> key[i] <= key && key < nodepointer -> key[i+1]) {
-						return tree_search((bpt_node *)nodepointer->pointer[i], key);
+						return tree_search((bpt_node *)nodepointer->pointer[i+1], key);
 					}
 				}
 			}
